@@ -149,6 +149,10 @@
 
   /* Matrix */
   .matrix-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+  .matrix-wrap.scrolly{max-height:min(58vh,540px);overflow:auto}
+  .bulkrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:4px 0 2px}
+  table.mx th.taph{cursor:pointer}
+  table.mx th.taph:hover{color:var(--accent);background:var(--accent-soft)}
   table.mx{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%}
   table.mx th,table.mx td{border-bottom:1px solid var(--line);border-right:1px solid var(--line)}
   table.mx thead th{position:sticky;top:0;z-index:3;background:var(--surface-2);font-size:12px;color:var(--muted);font-weight:700;padding:8px 6px;white-space:nowrap;min-width:60px}
@@ -554,6 +558,13 @@ function viewRespond(app){
   ));
   app.append(el("section",{class:"card"},
     legend(),
+    el("div",{class:"bulkrow"},
+      el("span",{class:"subtle",style:"font-weight:700"},"一括："),
+      el("button",{class:"btn ghost sm",type:"button",onclick:()=>setAllCells(2)},"全部 ○"),
+      el("button",{class:"btn ghost sm",type:"button",onclick:()=>setAllCells(1)},"全部 △"),
+      el("button",{class:"btn ghost sm",type:"button",onclick:()=>setAllCells(0)},"クリア")
+    ),
+    el("p",{class:"subtle",style:"margin:2px 0 8px"},"日付・時間帯の見出しをタップすると、その列／行をまとめて ○→△→× に切り替えできます。"),
     buildGrid("respond"),
     el("label",{class:"fld"},el("span",{class:"lbl"},"ひとこと ",el("span",{class:"opt"},"任意")),textarea(MY.comment,"例）金曜は20時以降なら🙆",v=>MY.comment=v))
   ));
@@ -574,11 +585,11 @@ async function submitAnswer(){
 
 /* ---------- grid builder ---------- */
 function buildGrid(kind){
-  const wrap=el("div",{class:"matrix-wrap"});
+  const wrap=el("div",{class:"matrix-wrap"+(kind==="result"?" scrolly":"")});
   const table=el("table",{class:"mx"});
   const thead=el("thead");const htr=el("tr");
   htr.append(el("th",{},""));
-  cols(EV).forEach(c=>htr.append(el("th",{},c.label,c.sub?el("small",{},c.sub):null)));
+  cols(EV).forEach((c,ci)=>{const th=kind==="respond"?el("th",{class:"taph",title:"この日をまとめて ○→△→×",onclick:()=>fillCol(ci)},c.label,c.sub?el("small",{},c.sub):null):el("th",{},c.label,c.sub?el("small",{},c.sub):null);htr.append(th);});
   thead.append(htr);table.append(thead);
   const tbody=el("tbody");
   const store=kind==="result"?ANS:null;
@@ -587,7 +598,7 @@ function buildGrid(kind){
   const heatVar=getComputedStyle(document.documentElement).getPropertyValue("--heat");
   rows(EV).forEach((r,ri)=>{
     const tr=el("tr");
-    tr.append(el("th",{},r.label,r.sub?el("small",{},r.sub):null));
+    tr.append(kind==="respond"?el("th",{class:"taph",title:"この時間帯をまとめて ○→△→×",onclick:()=>fillRow(ri)},r.label,r.sub?el("small",{},r.sub):null):el("th",{},r.label,r.sub?el("small",{},r.sub):null));
     cols(EV).forEach((c,ci)=>{
       const key=ri+"_"+ci;
       if(kind==="respond"){
@@ -621,13 +632,18 @@ function buildGrid(kind){
     wrap.addEventListener("scroll",upd);window.addEventListener("scroll",onScroll,{passive:true});
     requestAnimationFrame(()=>{place();upd();});
   }else{
-    const hint=el("div",{class:"gridhint",style:"display:none"},"← 横にスワイプでスクロール →");
+    const hint=el("div",{class:"gridhint",style:"display:none"},"スワイプで上下・左右にスクロール（日付は上部に固定）");
     box.append(hint);
-    requestAnimationFrame(()=>{if(wrap.scrollWidth>wrap.clientWidth+4)hint.style.display="block";});
+    requestAnimationFrame(()=>{if(wrap.scrollWidth>wrap.clientWidth+4||wrap.scrollHeight>wrap.clientHeight+4)hint.style.display="block";});
   }
   return box;
 }
 function symbol(v){return v===2?"○":v===1?"△":"×";}
+/* 一括入力：全体／列（日付）／行（時間帯）を ○→△→× でまとめて切り替え */
+function setAllCells(v){rows(EV).forEach((r,ri)=>cols(EV).forEach((c,ci)=>{MY.cells[ri+"_"+ci]=v;}));render();}
+function nextForKeys(keys){const allO=keys.every(k=>(MY.cells[k]||0)===2);if(allO)return 1;const allT=keys.every(k=>(MY.cells[k]||0)===1);if(allT)return 0;return 2;}
+function fillCol(ci){const keys=rows(EV).map((r,ri)=>ri+"_"+ci);const v=nextForKeys(keys);keys.forEach(k=>MY.cells[k]=v);render();}
+function fillRow(ri){const keys=cols(EV).map((c,ci)=>ri+"_"+ci);const v=nextForKeys(keys);keys.forEach(k=>MY.cells[k]=v);render();}
 function enablePaint(wrap){
   let painting=false,paintVal=null,mt=false,lx=0,ly=0,startCell=null,moved=false;
   const avg=(t,a)=>{let s=0;for(const p of t)s+=p[a];return s/t.length;};
@@ -679,11 +695,11 @@ function viewResult(app){
   }
 
   const allNames=Object.keys(store);
-  const gcard=el("section",{class:"card"},el("div",{style:"display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"},el("h2",{style:"font-size:15px"},"空き状況ヒートマップ"),el("span",{class:"subtle"},"マスをタップで内訳")));
-  if(FILTER.size)gcard.append(el("div",{class:"filternote"},el("span",{},"👥 "+[...FILTER].map(esc).join("・")+" の "+FILTER.size+"人だけで表示中"),el("button",{class:"btn ghost sm",style:"margin-left:auto",onclick:()=>{FILTER.clear();render();}},"すべて表示")));
+  const gcard=el("section",{class:"card"},el("div",{style:"display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"},el("h2",{style:"font-size:15px"},"空き状況ヒートマップ"),el("span",{class:"subtle"},FILTER.size?"絞り込み中":"マスをタップで内訳")));
   gcard.append(buildGrid("result"));
   if(allNames.length){
     gcard.append(el("div",{},el("div",{class:"subtle",style:"margin:12px 0 6px;font-weight:700"},"回答した人 ",el("span",{style:"font-weight:400"},"・タップで絞り込み／長押しでその人の予定を強調")),peopleRow(allNames,store)));
+    if(FILTER.size)gcard.append(el("div",{class:"filternote",style:"margin-top:10px"},el("span",{},"👥 "+[...FILTER].map(esc).join("・")+" の "+FILTER.size+"人だけで表示中"),el("button",{class:"btn ghost sm",style:"margin-left:auto",onclick:()=>{FILTER.clear();render();}},"すべて表示")));
     const withC=allNames.filter(n=>store[n].comment);
     if(withC.length)gcard.append(el("div",{class:"cmts"},...withC.map(n=>el("div",{class:"cmt"},el("b",{},"💬 "+esc(n)),"「"+esc(store[n].comment)+"」"))));
   }
@@ -754,7 +770,7 @@ function peopleRow(names,store){
     let timer=null,held=false;
     const startHold=()=>{held=false;timer=setTimeout(()=>{held=true;p.classList.add("holding");highlightPerson(n);},220);};
     const cancelHold=()=>{clearTimeout(timer);if(held){held=false;p.classList.remove("holding");clearHighlight();}};
-    p.addEventListener("pointerdown",e=>{e.preventDefault();startHold();});
+    p.addEventListener("pointerdown",e=>{e.preventDefault();try{p.setPointerCapture(e.pointerId);}catch(_){}startHold();});
     p.addEventListener("pointerup",()=>{const wasHold=held;clearTimeout(timer);if(wasHold){held=false;p.classList.remove("holding");clearHighlight();}else{toggleFilter(n);}});
     p.addEventListener("pointerleave",cancelHold);
     p.addEventListener("pointercancel",cancelHold);
