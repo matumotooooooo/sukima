@@ -243,6 +243,27 @@ const decEvent = s=>unpackEvent(JSON.parse(ub64u(s)));
 const encAns = a=>b64u(JSON.stringify(a));
 const decAns = s=>JSON.parse(ub64u(s));
 
+/* ================= バックエンド設定（Supabase）=================
+   リアルタイム集計を使うには、下の2つを自分のSupabaseプロジェクトの値に置き換える。
+   空のままなら「この端末内だけで動くオフライン版」として動作する。
+   ※ 必ず「anon public」キーを使う。「service_role」キーは絶対に貼らないこと。 */
+const SUPABASE_URL = "https://xujfvxqbcqdmhmvberdi.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1amZ2eHFiY3FkbWhtdmJlcmRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxNjY0NDAsImV4cCI6MjA5OTc0MjQ0MH0.MMTNGnO5crPL_WwoW01hKYOwHktIzq-eeIkirIh3cI8";
+/* ============================================================== */
+const remoteEnabled = ()=>!!(SUPABASE_URL && SUPABASE_ANON_KEY);
+function sbHeaders(extra){return Object.assign({apikey:SUPABASE_ANON_KEY,Authorization:"Bearer "+SUPABASE_ANON_KEY,"Content-Type":"application/json"},extra||{});}
+function sbBase(){return SUPABASE_URL.trim().replace(/\/+$/,"").replace(/\/rest\/v1$/,"");}
+async function sbFetch(path,opts){const r=await fetch(sbBase()+"/rest/v1/"+path,opts);if(!r.ok)throw new Error("supabase "+r.status);return r;}
+async function remoteSaveEvent(ev){await sbFetch("events",{method:"POST",headers:sbHeaders({Prefer:"resolution=merge-duplicates,return=minimal"}),body:JSON.stringify({id:ev.id,data:packEvent(ev)})});}
+async function remoteLoadEvent(id){const r=await sbFetch("events?select=data&id=eq."+encodeURIComponent(id),{headers:sbHeaders()});const rows=await r.json();return rows.length?unpackEvent(rows[0].data):null;}
+async function remoteUpsertAnswer(eventId,name,cells,comment){await sbFetch("answers",{method:"POST",headers:sbHeaders({Prefer:"resolution=merge-duplicates,return=minimal"}),body:JSON.stringify({event_id:eventId,name,cells,comment})});}
+async function remoteLoadAnswers(eventId){const r=await sbFetch("answers?select=name,cells,comment&event_id=eq."+encodeURIComponent(eventId),{headers:sbHeaders()});const rows=await r.json();const out={};rows.forEach(x=>out[x.name]={cells:x.cells||{},comment:x.comment||""});return out;}
+
+/* ---------- unified data layer (in-memory ANS) ---------- */
+let ANS={};
+async function fetchAnswers(){if(!EV)return ANS={};if(remoteEnabled()){try{ANS=await remoteLoadAnswers(EV.id);}catch(e){toast("集計の取得に失敗しました");}}else{ANS=loadAnswers(EV.id);}return ANS;}
+async function putAnswer(name,cells,comment){if(remoteEnabled()){await remoteUpsertAnswer(EV.id,name,cells,comment);}else{const s=loadAnswers(EV.id);s[name]={cells,comment,ts:Date.now()};saveAnswers(EV.id,s);}ANS[name]={cells,comment};}
+
 /* ---------- theme ---------- */
 const THEME_KEY="sukima:theme";
 function applyTheme(t){if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);else document.documentElement.removeAttribute("data-theme");}
@@ -259,10 +280,22 @@ function saveAnswers(id,obj){localStorage.setItem(ansKey(id),JSON.stringify(obj)
 let EV=null, SCREEN="home", SUPPRESS_HASH=false;
 function cols(ev){return ev.cols;}
 function rows(ev){return ev.rows;}
-function shareURL(){return location.href.split("#")[0]+"#e="+encEvent(EV);}
-function readHash(){const m=location.hash.match(/[#&]e=([^&]+)/);if(m){try{EV=decEvent(m[1]);return !!(EV&&EV.cols&&EV.cols.length);}catch(e){}}return false;}
-function go(screen){SCREEN=screen;render();window.scrollTo(0,0);}
-window.addEventListener("hashchange",()=>{if(SUPPRESS_HASH){SUPPRESS_HASH=false;return;}if(readHash())go("respond");});
+function shareURL(){const base=location.href.split("#")[0];return remoteEnabled()?base+"#id="+EV.id:base+"#e="+encEvent(EV);}
+function go(screen){stopPoll();SCREEN=screen;render();window.scrollTo(0,0);}
+async function nav(screen){stopPoll();SCREEN=screen;render();window.scrollTo(0,0);try{await fetchAnswers();}catch(e){}if(SCREEN===screen){render();if(screen==="result")startPoll();}}
+let POLL=null;
+function startPoll(){stopPoll();if(!remoteEnabled())return;POLL=setInterval(async()=>{if(SCREEN!=="result"){stopPoll();return;}const before=JSON.stringify(ANS);await fetchAnswers();if(SCREEN==="result"&&JSON.stringify(ANS)!==before){const y=window.scrollY;render();window.scrollTo(0,y);}},6000);}
+function stopPoll(){if(POLL){clearInterval(POLL);POLL=null;}}
+async function boot(){
+  const h=location.hash;const mId=h.match(/[#&]id=([^&]+)/);const mE=h.match(/[#&]e=([^&]+)/);
+  if(mId){
+    if(remoteEnabled()){SCREEN="loading";render();try{EV=await remoteLoadEvent(mId[1]);}catch(e){EV=null;}if(EV){await fetchAnswers();SCREEN="respond";}else SCREEN="notfound";}
+    else SCREEN="notfound";
+  }else if(mE){try{EV=decEvent(mE[1]);if(EV&&EV.cols&&EV.cols.length){await fetchAnswers();SCREEN="respond";}else SCREEN="home";}catch(e){SCREEN="home";}}
+  else SCREEN="home";
+  render();
+}
+window.addEventListener("hashchange",()=>{if(SUPPRESS_HASH){SUPPRESS_HASH=false;return;}boot();});
 
 /* =========================================================
    HOME
@@ -274,6 +307,7 @@ function viewHome(app){
       el("h1",{style:"font-size:27px;margin:8px 0 6px;line-height:1.25"},"リンクを送るだけ。ログインも登録もいらない日程調整。"),
       el("p",{class:"lead"},"カレンダーで候補日をタップ、あとはスワイプで回答するだけ。結果はヒートマップで自動集計し、みんなの都合が重なる“イチオシの枠”まで教えてくれます。"),
       el("div",{class:"row",style:"margin-top:18px"},el("button",{class:"btn primary",onclick:()=>go("create")},"＋ 新しく調整をつくる")),
+      el("div",{class:"subtle",style:"margin-top:10px;font-weight:700;color:"+(remoteEnabled()?"var(--ok)":"var(--faint)")},remoteEnabled()?"☁ リアルタイム集計 ON — リンクを開いて回答すると、全員の画面に自動で集まります":"● この端末のみで動作中（バックエンド未設定）"),
       el("div",{class:"steps"},
         step("1","つくる","カレンダーで候補日を選んでリンクを発行。"),
         step("2","送る","LINEでリンクを共有。友達はその場でスワイプ回答。"),
@@ -390,7 +424,7 @@ function slotRows(){
   if(CRE.slot==="morn")return [{label:"朝",h:9,m:0},{label:"昼",h:13,m:0},{label:"夜",h:19,m:0}];
   const out=[];const s=CRE.cs*60,e=CRE.ce*60,st=CRE.cstep;for(let t=s;t+st<=e;t+=st)out.push({label:pad(Math.floor(t/60))+":"+pad(t%60),h:Math.floor(t/60),m:t%60});return out;
 }
-function createEvent(){
+async function createEvent(){
   if(!CRE.title.trim()){toast("タイトルを入れてください");return;}
   if(!CRE.dates.size){toast("候補日をカレンダーで選んでください");return;}
   const rs=slotRows();
@@ -399,7 +433,10 @@ function createEvent(){
   const ds=[...CRE.dates].sort();
   const colsA=ds.map(iso=>{const dt=new Date(iso+"T00:00:00");return {label:(dt.getMonth()+1)+"/"+dt.getDate(),sub:WD[(dt.getDay()+6)%7],date:iso};});
   EV={v:2,id:rid(),title:CRE.title.trim(),note:CRE.note.trim(),mode:"date",cols:colsA,rows:rs,deadline:CRE.deadline||"",createdAt:Date.now()};
-  SUPPRESS_HASH=true;location.hash="e="+encEvent(EV);go("share");
+  ANS={};
+  if(remoteEnabled()){try{await remoteSaveEvent(EV);}catch(e){toast("作成に失敗しました。バックエンド設定を確認してください");return;}SUPPRESS_HASH=true;location.hash="id="+EV.id;}
+  else{SUPPRESS_HASH=true;location.hash="e="+encEvent(EV);}
+  go("share");
 }
 
 /* =========================================================
@@ -420,8 +457,8 @@ function viewShare(app){
     ),
     el("div",{class:"divider"}),
     el("div",{class:"row"},
-      el("button",{class:"btn primary",onclick:()=>go("respond")},"自分も回答する →"),
-      el("button",{class:"btn ghost",onclick:()=>go("result")},"回答状況を見る")
+      el("button",{class:"btn primary",onclick:()=>nav("respond")},"自分も回答する →"),
+      el("button",{class:"btn ghost",onclick:()=>nav("result")},"回答状況を見る")
     )
   ));
 }
@@ -432,7 +469,7 @@ function shareLine(url,text){const u="https://line.me/R/msg/text/?"+encodeURICom
 ========================================================= */
 let MY={name:"",cells:{},comment:""};
 function viewRespond(app){
-  const store=loadAnswers(EV.id);
+  const store=ANS;
   const savedName=localStorage.getItem(nameKey)||"";
   if(!MY.name)MY.name=savedName;
   if(MY.name&&store[MY.name]){MY.cells={...store[MY.name].cells};MY.comment=store[MY.name].comment||"";}
@@ -450,12 +487,12 @@ function viewRespond(app){
     buildGrid("respond"),
     el("label",{class:"fld"},el("span",{class:"lbl"},"ひとこと ",el("span",{class:"opt"},"任意")),textarea(MY.comment,"例）金曜は20時以降なら🙆",v=>MY.comment=v))
   ));
-  renderBar([el("button",{class:"btn ghost sm",onclick:()=>go("result")},"集計を見る"),el("div",{style:"flex:1"}),el("button",{class:"btn primary",onclick:submitAnswer},overdue?"締切後だけど回答":"回答を保存 →")]);
+  renderBar([el("button",{class:"btn ghost sm",onclick:()=>nav("result")},"集計を見る"),el("div",{style:"flex:1"}),el("button",{class:"btn primary",onclick:submitAnswer},overdue?"締切後だけど回答":"回答を保存 →")]);
 }
 function deadlineLine(){if(!EV.deadline)return null;const over=isOverdue();return el("div",{class:"deadline"+(over?" over":""),style:"margin-top:8px"},(over?"⏰ 締切を過ぎています（":"⏳ 回答締切：")+fmtDate(EV.deadline)+(over?"）":""));}
 function isOverdue(){if(!EV.deadline)return false;const d=new Date(EV.deadline+"T23:59:59");return Date.now()>d.getTime();}
 function legend(){return el("div",{class:"legend"},el("b",{},el("span",{class:"sym o"},"○"),"行ける"),el("b",{},el("span",{class:"sym t"},"△"),"たぶん/条件付き"),el("b",{},el("span",{class:"sym x"},"×"),"無理（空欄）"));}
-function submitAnswer(){if(!MY.name.trim()){toast("名前を入れてください");return;}localStorage.setItem(nameKey,MY.name.trim());const store=loadAnswers(EV.id);store[MY.name.trim()]={cells:MY.cells,comment:MY.comment.trim(),ts:Date.now()};saveAnswers(EV.id,store);toast("回答を保存しました");go("result");}
+async function submitAnswer(){if(!MY.name.trim()){toast("名前を入れてください");return;}const nm=MY.name.trim();localStorage.setItem(nameKey,nm);try{await putAnswer(nm,MY.cells,MY.comment.trim());}catch(e){toast("保存に失敗しました。通信環境を確認してください");return;}toast("回答を保存しました");nav("result");}
 
 /* ---------- grid builder ---------- */
 function buildGrid(kind){
@@ -466,7 +503,7 @@ function buildGrid(kind){
   cols(EV).forEach(c=>htr.append(el("th",{},c.label,c.sub?el("small",{},c.sub):null)));
   thead.append(htr);table.append(thead);
   const tbody=el("tbody");
-  const store=kind==="result"?loadAnswers(EV.id):null;
+  const store=kind==="result"?ANS:null;
   let agg=null,best=-1;
   if(kind==="result"){agg=computeAgg(store);best=agg.best;}
   const heatVar=getComputedStyle(document.documentElement).getPropertyValue("--heat");
@@ -511,6 +548,7 @@ function enablePaint(wrap){
    RESULT
 ========================================================= */
 function computeAgg(store){
+  store=store||ANS;
   const names=Object.keys(store);const total=names.length;const cells={},score={};let best=0;
   rows(EV).forEach((r,ri)=>cols(EV).forEach((c,ci)=>{const k=ri+"_"+ci;cells[k]={o:0,t:0,x:0};score[k]=0;}));
   names.forEach(n=>{const cel=store[n].cells||{};for(const k in cells){const v=cel[k]||0;if(v===2){cells[k].o++;score[k]+=1;}else if(v===1){cells[k].t++;score[k]+=0.5;}else cells[k].x++;}});
@@ -518,10 +556,11 @@ function computeAgg(store){
   return {cells,score,total,names,best};
 }
 function viewResult(app){
-  const store=loadAnswers(EV.id);const agg=computeAgg(store);
+  const store=ANS;const agg=computeAgg(store);
   const head=el("section",{class:"card"});
   head.append(el("div",{class:"eyebrow"},"集計結果"),el("h1",{style:"font-size:20px;margin:6px 0 2px"},esc(EV.title)));
   const _dl=deadlineLine();if(_dl)head.append(_dl);
+  if(remoteEnabled())head.append(el("div",{class:"subtle",style:"margin-top:8px;font-weight:700;color:var(--ok)"},"🔄 自動更新中（みんなの回答がリアルタイムに反映されます）"));
   const bestSlots=[];rows(EV).forEach((r,ri)=>cols(EV).forEach((c,ci)=>{const k=ri+"_"+ci;if(agg.total&&agg.score[k]===agg.best&&agg.best>0)bestSlots.push({r,c,k});}));
   if(agg.total===0){head.append(el("div",{class:"note"},"まだ回答がありません。下の「回答する」から入力するか、リンクを友達に送りましょう。"));}
   else{
@@ -532,8 +571,8 @@ function viewResult(app){
   app.append(head);
 
   const me=localStorage.getItem(nameKey);
-  if(me&&store[me]){
-    MY.name=me;MY.cells=store[me].cells||{};MY.comment=store[me].comment||"";
+  if(me&&store[me]){MY.name=me;MY.cells=store[me].cells||{};MY.comment=store[me].comment||"";}
+  if(!remoteEnabled()&&me&&store[me]){
     app.append(el("section",{class:"card",style:"border-color:var(--accent)"},el("div",{style:"display:flex;gap:10px;align-items:center;flex-wrap:wrap"},el("div",{style:"flex:1;min-width:180px"},el("div",{style:"font-weight:800"},"あなたの回答を主催者に送る"),el("div",{class:"subtle"},"別の端末で集計している場合は、このコードをLINEで送ってください。")),el("button",{class:"btn primary sm",onclick:async()=>{await copy(myAnswerCode());toast("回答コードをコピーしました");}},"回答コードをコピー"))));
   }
 
@@ -541,22 +580,34 @@ function viewResult(app){
   if(agg.names.length)gcard.append(el("div",{},el("div",{class:"subtle",style:"margin:12px 0 6px;font-weight:700"},"回答した人"),peopleRow(agg.names,store)));
   app.append(gcard);
 
-  app.append(el("section",{class:"card"},
-    el("h2",{style:"font-size:15px;margin-bottom:4px"},"友達の回答を集める"),
-    el("p",{class:"subtle",style:"margin:0 0 10px"},"別の端末で回答した友達は、回答後に出る「回答コードをコピー」を送ってくれます。ここに貼って取り込むと、この画面に合算されます。"),
-    el("textarea",{id:"impbox",placeholder:"友達から届いた回答コードを貼り付け"}),
-    el("div",{class:"row",style:"margin-top:10px"},
-      el("button",{class:"btn ghost sm",onclick:importAnswer},"取り込む"),
-      el("button",{class:"btn ghost sm",onclick:async()=>{await copy(shareURL());toast("調整リンクをコピーしました");}},"調整リンクをコピー"),
-      el("button",{class:"btn line sm",onclick:()=>shareLine(shareURL(),"「"+EV.title+"」の日程調整、まだの人は回答おねがい！")},"LINEで催促")
-    )
-  ));
+  if(remoteEnabled()){
+    app.append(el("section",{class:"card"},
+      el("h2",{style:"font-size:15px;margin-bottom:4px"},"みんなに回答してもらう"),
+      el("p",{class:"subtle",style:"margin:0 0 10px"},"リンクを送るだけ。友達が回答すると、この画面に自動で集まります（手動の取り込みは不要）。"),
+      el("div",{class:"row"},
+        el("button",{class:"btn ghost sm",onclick:()=>nav("result")},"今すぐ更新"),
+        el("button",{class:"btn ghost sm",onclick:async()=>{await copy(shareURL());toast("調整リンクをコピーしました");}},"調整リンクをコピー"),
+        el("button",{class:"btn line sm",onclick:()=>shareLine(shareURL(),"「"+EV.title+"」の日程調整、まだの人は回答おねがい！")},"LINEで催促")
+      )
+    ));
+  }else{
+    app.append(el("section",{class:"card"},
+      el("h2",{style:"font-size:15px;margin-bottom:4px"},"友達の回答を集める"),
+      el("p",{class:"subtle",style:"margin:0 0 10px"},"別の端末で回答した友達は、回答後に出る「回答コードをコピー」を送ってくれます。ここに貼って取り込むと、この画面に合算されます。"),
+      el("textarea",{id:"impbox",placeholder:"友達から届いた回答コードを貼り付け"}),
+      el("div",{class:"row",style:"margin-top:10px"},
+        el("button",{class:"btn ghost sm",onclick:importAnswer},"取り込む"),
+        el("button",{class:"btn ghost sm",onclick:async()=>{await copy(shareURL());toast("調整リンクをコピーしました");}},"調整リンクをコピー"),
+        el("button",{class:"btn line sm",onclick:()=>shareLine(shareURL(),"「"+EV.title+"」の日程調整、まだの人は回答おねがい！")},"LINEで催促")
+      )
+    ));
+  }
 
   if(bestSlots.length){
     app.append(el("section",{class:"card"},el("h2",{style:"font-size:15px;margin-bottom:8px"},"この枠で決める"),el("div",{class:"row"},...bestSlots.slice(0,4).map(b=>el("button",{class:"btn ghost sm",onclick:()=>confirmSlot(b)},slotLabel(b.r,b.c)))),el("p",{class:"subtle",style:"margin:10px 0 0"},"確定した枠はカレンダー(.ics / Googleカレンダー)にそのまま追加できます。")));
   }
 
-  renderBar([el("button",{class:"btn ghost sm",onclick:()=>go("home")},"ホーム"),el("div",{style:"flex:1"}),el("button",{class:"btn primary",onclick:()=>go("respond")},"回答する / 直す")]);
+  renderBar([el("button",{class:"btn ghost sm",onclick:()=>go("home")},"ホーム"),el("div",{style:"flex:1"}),el("button",{class:"btn primary",onclick:()=>nav("respond")},"回答する / 直す")]);
 }
 function stat(k,v,u){return el("div",{class:"stat"},el("div",{class:"k"},k),el("div",{class:"v tnum"},v," ",el("small",{},u)));}
 function countAllYes(agg){let n=0;for(const k in agg.cells)if(agg.total>0&&agg.cells[k].o===agg.total)n++;return n;}
@@ -566,13 +617,13 @@ function importAnswer(){
   const raw=$("#impbox").value.trim();if(!raw){toast("回答コードを貼り付けてください");return;}
   let n=0;
   raw.split(/\s+/).forEach(tok=>{if(!tok)return;try{const a=decAns(tok.replace(/^.*#?a=/,""));if(!a||!a.name)return;if(a.id&&a.id!==EV.id)return;const store=loadAnswers(EV.id);store[a.name]={cells:a.cells||{},comment:a.comment||"",ts:Date.now()};saveAnswers(EV.id,store);n++;}catch(e){}});
-  if(n){toast(n+"件を取り込みました");go("result");}else toast("取り込めるコードがありませんでした");
+  if(n){toast(n+"件を取り込みました");nav("result");}else toast("取り込めるコードがありませんでした");
 }
 function myAnswerCode(){return "a="+encAns({id:EV.id,name:MY.name.trim(),cells:MY.cells,comment:MY.comment.trim()});}
 
 /* ---------- popovers ---------- */
 function showCellDetail(key,r,c){
-  const store=loadAnswers(EV.id);const o=[],t=[],x=[];
+  const store=ANS;const o=[],t=[],x=[];
   Object.keys(store).forEach(n=>{const v=(store[n].cells||{})[key]||0;(v===2?o:v===1?t:x).push(n);});
   openPop(el("div",{},el("h3",{},slotLabel(r,c)),el("p",{class:"subtle",style:"margin:0 0 6px"},o.length+"人が○ / "+t.length+"人が△ / "+x.length+"人が×"),grp("○ 行ける",o),grp("△ たぶん",t),grp("× 無理",x)));
 }
@@ -602,10 +653,11 @@ function renderBar(children){const bar=$("#bar");bar.innerHTML="";if(!children||
 /* =========================================================
    RENDER
 ========================================================= */
-function render(){const app=$("#app");app.innerHTML="";$("#bar").innerHTML="";if(SCREEN==="home")viewHome(app);else if(SCREEN==="create")viewCreate(app);else if(SCREEN==="share")viewShare(app);else if(SCREEN==="respond")viewRespond(app);else if(SCREEN==="result")viewResult(app);}
+function viewLoading(app){app.append(el("section",{class:"card"},el("div",{class:"eyebrow"},"読み込み中"),el("p",{class:"lead",style:"margin-top:8px"},"調整を読み込んでいます…")));}
+function viewNotFound(app){app.append(el("section",{class:"card"},el("div",{class:"eyebrow"},"見つかりません"),el("h1",{style:"font-size:20px;margin:6px 0"},"この調整リンクは開けませんでした"),el("p",{class:"lead"},"リンクが正しいか確認してください。作成者に再共有してもらうと直る場合があります。"),el("div",{class:"row",style:"margin-top:14px"},el("button",{class:"btn primary",onclick:()=>{SUPPRESS_HASH=true;location.hash="";go("home");}},"ホームへ"))));}
+function render(){const app=$("#app");app.innerHTML="";$("#bar").innerHTML="";if(SCREEN==="home")viewHome(app);else if(SCREEN==="create")viewCreate(app);else if(SCREEN==="share")viewShare(app);else if(SCREEN==="respond")viewRespond(app);else if(SCREEN==="result")viewResult(app);else if(SCREEN==="loading")viewLoading(app);else if(SCREEN==="notfound")viewNotFound(app);}
 
-if(readHash()){SCREEN="respond";}else{SCREEN="home";}
-render();
+boot();
 </script>
 </body>
 </html>
