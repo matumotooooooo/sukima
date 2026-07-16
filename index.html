@@ -155,7 +155,14 @@
   table.mx thead th small{display:block;color:var(--faint);font-weight:600;font-size:10px}
   table.mx tbody th{position:sticky;left:0;z-index:2;background:var(--surface-2);font-size:12px;color:var(--muted);font-weight:700;padding:8px 10px;white-space:nowrap;text-align:right;min-width:52px}
   table.mx thead th:first-child{position:sticky;left:0;z-index:4}
-  .cell{width:60px;height:48px;text-align:center;cursor:pointer;user-select:none;font-weight:800;font-size:17px;position:relative;touch-action:none}
+  .cell{width:60px;height:48px;text-align:center;cursor:pointer;user-select:none;font-weight:800;font-size:17px;position:relative}
+  .cell.paint{touch-action:none}
+  .gridbox{position:relative}
+  .gridhint{font-size:12px;color:var(--muted);margin-top:8px;text-align:center}
+  .scroll-arrow{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;display:none;place-items:center;background:color-mix(in srgb,var(--accent) 84%,transparent);color:#fff;font-size:24px;font-weight:800;line-height:1;cursor:pointer;z-index:6;box-shadow:0 3px 12px rgba(0,0,0,.28);animation:arrpulse 1.4s ease-in-out infinite}
+  .scroll-arrow.show{display:grid}
+  .scroll-arrow.left{left:58px} .scroll-arrow.right{right:8px}
+  @keyframes arrpulse{0%,100%{opacity:.35}50%{opacity:.95}}
   .cell .who{position:absolute;left:0;right:0;bottom:3px;font-size:9px;font-weight:700;color:var(--faint)}
   .cell.v0{color:var(--faint)}
   .cell.v1{color:var(--maybe);background:color-mix(in srgb,var(--maybe) 12%,transparent)}
@@ -237,7 +244,8 @@ const rid = ()=>Math.random().toString(36).slice(2,8);
 const pad = n=>String(n).padStart(2,"0");
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove("show"),1900);}
 async function copy(text){try{await navigator.clipboard.writeText(text);return true;}catch(e){const ta=el("textarea",{});ta.value=text;document.body.append(ta);ta.select();try{document.execCommand("copy");}catch(_){}ta.remove();return true;}}
-const WD=["月","火","水","木","金","土","日"];
+const WD=["月","火","水","木","金","土","日"];        // 日付ラベル用（月始まり index=(getDay+6)%7）
+const CAL_WD=["日","月","火","水","木","金","土"];      // カレンダー表示用（日曜始まり index=getDay）
 const isoLocal = d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
 function fmtDate(iso){const d=new Date(iso+"T00:00:00");return (d.getMonth()+1)+"/"+d.getDate()+"("+WD[(d.getDay()+6)%7]+")";}
 
@@ -365,14 +373,14 @@ function viewCreate(app){
   calBlock.append(el("div",{class:"lbl"},"候補日",el("span",{class:"opt"},"複数選択OK・飛び飛びでもOK")));
   const quick=el("div",{class:"chips",style:"margin-bottom:8px"});
   quick.append(
-    el("button",{class:"chip mini",type:"button",onclick:()=>{selectWeekdays([5,6]);}},"週末をまとめて"),
-    el("button",{class:"chip mini",type:"button",onclick:()=>{selectWeekdays([0,1,2,3,4]);}},"平日をまとめて"),
+    el("button",{class:"chip mini",type:"button",onclick:()=>{selectWeekdays([0,6]);}},"週末をまとめて"),
+    el("button",{class:"chip mini",type:"button",onclick:()=>{selectWeekdays([1,2,3,4,5]);}},"平日をまとめて"),
     el("button",{class:"chip mini",type:"button",onclick:()=>{CRE.dates.clear();refreshCal();}},"クリア")
   );
   calBlock.append(quick);
   const calHost=el("div",{id:"calHost"});
   calBlock.append(calHost);
-  calBlock.append(el("div",{class:"calhint"},"日付を指でなぞると、まとめて選択／解除できます。曜日の見出しタップでその曜日を一括選択、◀▶でもっと先の週も表示。",el("span",{id:"selInfo"})));
+  calBlock.append(el("div",{class:"calhint"},"1本指でなぞると候補日をまとめて選択／解除、曜日の見出しタップで一括選択、前の週／次の週で移動。画面を動かしたいときは2本指でスクロール。",el("span",{id:"selInfo"})));
   c.append(calBlock);
   CAL_OFFSET=0;
   renderCal(calHost);
@@ -415,10 +423,10 @@ function viewCreate(app){
     customHost.append(box);
   }
   function refreshCal(){renderCal(calHost);updateSelInfo();}
-  function selectWeekdays(wdList){const days=calDays();days.forEach(d=>{if(d.past)return;const wd=(new Date(d.iso+"T00:00:00").getDay()+6)%7;if(wdList.includes(wd))CRE.dates.add(d.iso);});refreshCal();}
+  function selectWeekdays(gdList){const days=calDays();days.forEach(d=>{if(d.past)return;const gd=new Date(d.iso+"T00:00:00").getDay();if(gdList.includes(gd))CRE.dates.add(d.iso);});refreshCal();}
   window.__refreshCal=refreshCal;
 }
-function calStart(){const t=new Date();t.setHours(0,0,0,0);const mon=new Date(t);mon.setDate(t.getDate()-((t.getDay()+6)%7)+CAL_OFFSET*7);return mon;}
+function calStart(){const t=new Date();t.setHours(0,0,0,0);const sun=new Date(t);sun.setDate(t.getDate()-t.getDay()+CAL_OFFSET*7);return sun;}
 function calDays(){const start=calStart();const today=isoLocal(new Date());const out=[];for(let i=0;i<CAL_WEEKS*7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const iso=isoLocal(d);out.push({iso,day:d.getDate(),month:d.getMonth()+1,past:iso<today,today:iso===today});}return out;}
 function fmtMD(iso){const d=new Date(iso+"T00:00:00");return (d.getMonth()+1)+"/"+d.getDate();}
 function renderCal(host){
@@ -427,14 +435,14 @@ function renderCal(host){
   // 期間ナビ
   const navd=el("div",{class:"calnav"});
   navd.append(
-    el("button",{class:"calnav-btn",type:"button",disabled:CAL_OFFSET<=0?"":null,onclick:()=>{CAL_OFFSET=Math.max(0,CAL_OFFSET-4);refreshCalOnly(host);}},"‹ 前の4週"),
+    el("button",{class:"calnav-btn",type:"button",disabled:CAL_OFFSET<=0?"":null,onclick:()=>{CAL_OFFSET=Math.max(0,CAL_OFFSET-1);refreshCalOnly(host);}},"‹ 前の週"),
     el("span",{class:"calnav-range"},fmtMD(days[0].iso)+" 〜 "+fmtMD(days[days.length-1].iso)),
-    el("button",{class:"calnav-btn",type:"button",onclick:()=>{CAL_OFFSET+=4;refreshCalOnly(host);}},"次の4週 ›")
+    el("button",{class:"calnav-btn",type:"button",onclick:()=>{CAL_OFFSET+=1;refreshCalOnly(host);}},"次の週 ›")
   );
   host.append(navd);
   const table=el("table",{class:"cal"});
   const thead=el("thead");const htr=el("tr");
-  WD.forEach((w,i)=>{const th=el("th",{class:i===5?"sat":i===6?"sun":"",title:w+"曜をまとめて選択",onclick:()=>toggleWeekday(i)},w);htr.append(th);});
+  CAL_WD.forEach((w,gd)=>{const th=el("th",{class:gd===0?"sun":gd===6?"sat":"",title:w+"曜をまとめて選択",onclick:()=>toggleWeekday(gd)},w);htr.append(th);});
   thead.append(htr);table.append(thead);
   const tb=el("tbody");
   for(let wk=0;wk<CAL_WEEKS;wk++){const tr=el("tr");for(let dd=0;dd<7;dd++){const d=days[wk*7+dd];const cls="d"+(d.past?" past":"")+(CRE.dates.has(d.iso)?" sel":"")+(d.today?" today":"");const cell=el("div",{class:cls,"data-iso":d.iso},String(d.day));tr.append(el("td",{},cell));}tb.append(tr);}
@@ -443,15 +451,20 @@ function renderCal(host){
 function refreshCalOnly(host){renderCal(host);updateSelInfo();}
 /* カレンダーを指でなぞって選択／解除（イベント委譲でhostに1回だけ付ける） */
 function enableCalPaint(host){
-  let painting=false,mode=null;
+  let painting=false,mode=null,mt=false,lastY=0;
+  const avgY=t=>{let s=0;for(const p of t)s+=p.clientY;return s/t.length;};
+  // 2本指＝画面を上下にスクロール（1本指の選択と競合させない）
+  host.addEventListener("touchstart",e=>{if(e.touches.length>=2){mt=true;painting=false;lastY=avgY(e.touches);}},{passive:true});
+  host.addEventListener("touchmove",e=>{if(mt&&e.touches.length>=2){const y=avgY(e.touches);window.scrollBy(0,lastY-y);lastY=y;}},{passive:true});
+  host.addEventListener("touchend",e=>{if(e.touches.length<2)mt=false;},{passive:true});
   const dayAt=(x,y)=>{const e=document.elementFromPoint(x,y);const d=e&&e.closest?e.closest(".d"):null;return d&&!d.classList.contains("past")?d:null;};
   const apply=d=>{const iso=d.getAttribute("data-iso");if(mode){CRE.dates.add(iso);d.classList.add("sel");}else{CRE.dates.delete(iso);d.classList.remove("sel");}};
-  host.addEventListener("pointerdown",e=>{const d=e.target.closest(".d");if(!d||d.classList.contains("past"))return;e.preventDefault();mode=!CRE.dates.has(d.getAttribute("data-iso"));painting=true;apply(d);updateSelInfo();try{host.setPointerCapture(e.pointerId);}catch(_){}});
-  host.addEventListener("pointermove",e=>{if(!painting)return;const d=dayAt(e.clientX,e.clientY);if(d){const iso=d.getAttribute("data-iso"),has=CRE.dates.has(iso);if((mode&&!has)||(!mode&&has)){apply(d);updateSelInfo();}}});
+  host.addEventListener("pointerdown",e=>{if(mt)return;const d=e.target.closest(".d");if(!d||d.classList.contains("past"))return;e.preventDefault();mode=!CRE.dates.has(d.getAttribute("data-iso"));painting=true;apply(d);updateSelInfo();try{host.setPointerCapture(e.pointerId);}catch(_){}});
+  host.addEventListener("pointermove",e=>{if(mt||!painting)return;const d=dayAt(e.clientX,e.clientY);if(d){const iso=d.getAttribute("data-iso"),has=CRE.dates.has(iso);if((mode&&!has)||(!mode&&has)){apply(d);updateSelInfo();}}});
   const end=()=>{painting=false;mode=null;};
   host.addEventListener("pointerup",end);host.addEventListener("pointercancel",end);
 }
-function toggleWeekday(wd){const days=calDays().filter(d=>!d.past&&(new Date(d.iso+"T00:00:00").getDay()+6)%7===wd);const allSel=days.length&&days.every(d=>CRE.dates.has(d.iso));days.forEach(d=>{if(allSel)CRE.dates.delete(d.iso);else CRE.dates.add(d.iso);});if(window.__refreshCal)window.__refreshCal();}
+function toggleWeekday(gd){const days=calDays().filter(d=>!d.past&&new Date(d.iso+"T00:00:00").getDay()===gd);const allSel=days.length&&days.every(d=>CRE.dates.has(d.iso));days.forEach(d=>{if(allSel)CRE.dates.delete(d.iso);else CRE.dates.add(d.iso);});if(window.__refreshCal)window.__refreshCal();}
 function updateSelInfo(){const info=$("#selInfo");if(info){const n=CRE.dates.size;info.innerHTML=n?" 現在 <span class='selcount'>"+n+"日</span> 選択中":"";}}
 
 function field(label,opt,control){const l=el("label",{class:"fld"});l.append(el("span",{class:"lbl"},label,opt?el("span",{class:"opt"},opt):null),control);return l;}
@@ -568,7 +581,7 @@ function buildGrid(kind){
       const key=ri+"_"+ci;
       if(kind==="respond"){
         const v=MY.cells[key]||0;
-        tr.append(el("td",{class:"cell v"+v,"data-k":key},symbol(v)));
+        tr.append(el("td",{class:"cell paint v"+v,"data-k":key},symbol(v)));
       }else{
         const a=agg.cells[key];
         const td=el("td",{class:"cell"+(agg.score[key]===best&&best>0?" best":""),"data-k":key});
@@ -583,25 +596,39 @@ function buildGrid(kind){
     tbody.append(tr);
   });
   table.append(tbody);wrap.append(table);
-  if(kind==="respond")enablePaint(wrap);
-  const box=el("div",{});
-  const gnav=el("div",{class:"gridnav",style:"display:none"},
-    el("button",{class:"gnav",type:"button","aria-label":"左へ",onclick:()=>wrap.scrollBy({left:-Math.round(wrap.clientWidth*0.7),behavior:"smooth"})},"‹"),
-    el("span",{class:"gridnav-hint"},"候補日が多いときは ‹ › で移動"),
-    el("button",{class:"gnav",type:"button","aria-label":"右へ",onclick:()=>wrap.scrollBy({left:Math.round(wrap.clientWidth*0.7),behavior:"smooth"})},"›")
-  );
-  box.append(wrap,gnav);
-  requestAnimationFrame(()=>{if(wrap.scrollWidth>wrap.clientWidth+4)gnav.style.display="flex";});
+  const box=el("div",{class:"gridbox"});box.append(wrap);
+  if(kind==="respond"){
+    enablePaint(wrap);
+    const step=()=>Math.round(wrap.clientWidth*0.7);
+    const larr=el("div",{class:"scroll-arrow left","aria-label":"左へ",onclick:()=>wrap.scrollBy({left:-step(),behavior:"smooth"})},"‹");
+    const rarr=el("div",{class:"scroll-arrow right","aria-label":"右へ",onclick:()=>wrap.scrollBy({left:step(),behavior:"smooth"})},"›");
+    box.append(larr,rarr,el("div",{class:"gridhint"},"1本指でなぞって入力／2本指で表を左右にスクロール"));
+    const upd=()=>{const of=wrap.scrollWidth>wrap.clientWidth+4;larr.classList.toggle("show",of&&wrap.scrollLeft>4);rarr.classList.toggle("show",of&&wrap.scrollLeft+wrap.clientWidth<wrap.scrollWidth-4);};
+    // 矢印を「今見えている表の縦中央」に追従させる（縦に長い表でも常に視界に入る）
+    const place=()=>{const r=wrap.getBoundingClientRect();const vh=window.innerHeight||document.documentElement.clientHeight;const top=Math.max(r.top,8),bot=Math.min(r.bottom,vh-72);const rel=(top+bot)/2-r.top;larr.style.top=rarr.style.top=rel+"px";};
+    const onScroll=()=>{if(!document.body.contains(larr)){window.removeEventListener("scroll",onScroll);return;}place();upd();};
+    wrap.addEventListener("scroll",upd);window.addEventListener("scroll",onScroll,{passive:true});
+    requestAnimationFrame(()=>{place();upd();});
+  }else{
+    const hint=el("div",{class:"gridhint",style:"display:none"},"← 横にスワイプでスクロール →");
+    box.append(hint);
+    requestAnimationFrame(()=>{if(wrap.scrollWidth>wrap.clientWidth+4)hint.style.display="block";});
+  }
   return box;
 }
 function symbol(v){return v===2?"○":v===1?"△":"×";}
 function enablePaint(wrap){
-  let painting=false,paintVal=null;
+  let painting=false,paintVal=null,mt=false,lx=0,ly=0;
+  const avg=(t,a)=>{let s=0;for(const p of t)s+=p[a];return s/t.length;};
+  // 2本指＝表を左右／画面を上下にスクロール（1本指の入力と競合させない）
+  wrap.addEventListener("touchstart",e=>{if(e.touches.length>=2){mt=true;painting=false;lx=avg(e.touches,"clientX");ly=avg(e.touches,"clientY");}},{passive:true});
+  wrap.addEventListener("touchmove",e=>{if(mt&&e.touches.length>=2){const x=avg(e.touches,"clientX"),y=avg(e.touches,"clientY");wrap.scrollLeft+=lx-x;window.scrollBy(0,ly-y);lx=x;ly=y;}},{passive:true});
+  wrap.addEventListener("touchend",e=>{if(e.touches.length<2)mt=false;},{passive:true});
   const cellAt=(x,y)=>{const e=document.elementFromPoint(x,y);return e&&e.closest?e.closest(".cell"):null;};
-  const setCell=(td,v)=>{const k=td.getAttribute("data-k");MY.cells[k]=v;td.className="cell v"+v;td.textContent=symbol(v);};
+  const setCell=(td,v)=>{const k=td.getAttribute("data-k");MY.cells[k]=v;td.className="cell paint v"+v;td.textContent=symbol(v);};
   const cycle=v=>v===0?2:v===2?1:0;
-  wrap.addEventListener("pointerdown",e=>{const td=e.target.closest(".cell");if(!td)return;e.preventDefault();const k=td.getAttribute("data-k");paintVal=cycle(MY.cells[k]||0);painting=true;setCell(td,paintVal);try{wrap.setPointerCapture(e.pointerId);}catch(_){}});
-  wrap.addEventListener("pointermove",e=>{if(!painting)return;const td=cellAt(e.clientX,e.clientY);if(td&&wrap.contains(td)&&(MY.cells[td.getAttribute("data-k")]||0)!==paintVal)setCell(td,paintVal);});
+  wrap.addEventListener("pointerdown",e=>{if(mt)return;const td=e.target.closest(".cell");if(!td)return;e.preventDefault();const k=td.getAttribute("data-k");paintVal=cycle(MY.cells[k]||0);painting=true;setCell(td,paintVal);try{wrap.setPointerCapture(e.pointerId);}catch(_){}});
+  wrap.addEventListener("pointermove",e=>{if(mt||!painting)return;const td=cellAt(e.clientX,e.clientY);if(td&&wrap.contains(td)&&(MY.cells[td.getAttribute("data-k")]||0)!==paintVal)setCell(td,paintVal);});
   const end=()=>{painting=false;paintVal=null;};
   wrap.addEventListener("pointerup",end);wrap.addEventListener("pointercancel",end);
 }
@@ -709,7 +736,16 @@ function confirmDelete(name){
     el("h3",{},"「"+esc(name)+"」の回答を削除"),
     el("p",{class:"subtle",style:"margin:6px 0 0"},"この人の回答を消します。元に戻せません。"),
     el("div",{class:"row",style:"margin-top:14px"},
-      el("button",{class:"btn primary sm",style:"background:var(--no)",onclick:async(e)=>{const b=e.target;b.disabled=true;try{await delAnswer(name);}catch(_){toast("削除に失敗しました");b.disabled=false;return;}document.querySelectorAll(".pop-back").forEach(x=>x.remove());toast(name+"さんの回答を削除しました");nav("result");}},"削除する")
+      el("button",{class:"btn primary sm",style:"background:var(--no)",onclick:()=>confirmDelete2(name)},"削除する")
+    )
+  ));
+}
+function confirmDelete2(name){
+  openPop(el("div",{},
+    el("h3",{},"本当に削除してよろしいですか？"),
+    el("p",{class:"subtle",style:"margin:6px 0 0"},"「"+esc(name)+"」さんの回答を完全に削除します。この操作は取り消せません。"),
+    el("div",{class:"row",style:"margin-top:14px"},
+      el("button",{class:"btn primary sm",style:"background:var(--no)",onclick:async(e)=>{const b=e.target;b.disabled=true;try{await delAnswer(name);}catch(_){toast("削除に失敗しました");b.disabled=false;return;}document.querySelectorAll(".pop-back").forEach(x=>x.remove());toast(name+"さんの回答を削除しました");nav("result");}},"はい、削除します")
     )
   ));
 }
