@@ -187,8 +187,16 @@
   .pick .txt small{display:block;font-weight:600;color:var(--muted);font-size:12px}
 
   .people{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
-  .pill{background:var(--surface-2);border:1px solid var(--line-strong);border-radius:999px;padding:5px 11px;font-size:12.5px;font-weight:700;color:var(--ink)}
+  .pill{background:var(--surface-2);border:1px solid var(--line-strong);border-radius:999px;padding:5px 11px;font-size:12.5px;font-weight:700;color:var(--ink);cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none}
   .pill.me{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+  .pill.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);box-shadow:0 3px 10px rgba(var(--heat),.35)}
+  .pill.holding{background:var(--no);border-color:var(--no);color:#fff;transform:scale(1.05)}
+  .filternote{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;font-weight:700;color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;padding:8px 12px;margin-bottom:10px}
+  .cmts{margin-top:12px;display:grid;gap:6px}
+  .cmt{font-size:12.5px;color:var(--muted);background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:7px 10px}
+  .cmt b{color:var(--ink);font-weight:800;margin-right:4px}
+  .cell.hi-o{outline:3px solid var(--no);outline-offset:-3px;z-index:1}
+  .cell.hi-t{outline:2px dashed var(--no);outline-offset:-3px;z-index:1}
 
   .note{font-size:12.5px;color:var(--muted);background:var(--surface-2);border:1px dashed var(--line-strong);border-radius:10px;padding:10px 12px;margin-top:12px}
   .deadline{font-size:13px;font-weight:700}
@@ -280,6 +288,7 @@ async function remoteLoadAnswers(eventId){const r=await sbFetch("answers?select=
 
 /* ---------- unified data layer (in-memory ANS) ---------- */
 let ANS={};
+const FILTER=new Set();   // 集計画面で絞り込み中の回答者名（空＝全員）
 async function fetchAnswers(){if(!EV)return ANS={};if(remoteEnabled()){try{ANS=await remoteLoadAnswers(EV.id);}catch(e){toast("集計の取得に失敗しました");}}else{ANS=loadAnswers(EV.id);}return ANS;}
 async function putAnswer(name,cells,comment){if(remoteEnabled()){await remoteUpsertAnswer(EV.id,name,cells,comment);}else{const s=loadAnswers(EV.id);s[name]={cells,comment,ts:Date.now()};saveAnswers(EV.id,s);}ANS[name]={cells,comment};}
 async function delAnswer(name){if(remoteEnabled()){await remoteDeleteAnswer(EV.id,name);}else{const s=loadAnswers(EV.id);delete s[name];saveAnswers(EV.id,s);}delete ANS[name];}
@@ -307,7 +316,7 @@ function cols(ev){return ev.cols;}
 function rows(ev){return ev.rows;}
 function shareURL(){const base=location.href.split("#")[0];return remoteEnabled()?base+"#id="+EV.id:base+"#e="+encEvent(EV);}
 function go(screen){stopPoll();if(PROXY&&screen!=="respond")endProxy();SCREEN=screen;render();window.scrollTo(0,0);}
-async function nav(screen){stopPoll();if(PROXY&&screen!=="respond")endProxy();SCREEN=screen;render();window.scrollTo(0,0);try{await fetchAnswers();}catch(e){}if(SCREEN===screen){render();if(screen==="result")startPoll();}}
+async function nav(screen){stopPoll();if(PROXY&&screen!=="respond")endProxy();FILTER.clear();SCREEN=screen;render();window.scrollTo(0,0);try{await fetchAnswers();}catch(e){}if(SCREEN===screen){render();if(screen==="result")startPoll();}}
 let POLL=null;
 function startPoll(){stopPoll();if(!remoteEnabled())return;POLL=setInterval(async()=>{if(SCREEN!=="result"){stopPoll();return;}const before=JSON.stringify(ANS);await fetchAnswers();if(SCREEN==="result"&&JSON.stringify(ANS)!==before){const y=window.scrollY;render();window.scrollTo(0,y);}},6000);}
 function stopPoll(){if(POLL){clearInterval(POLL);POLL=null;}}
@@ -451,18 +460,20 @@ function renderCal(host){
 function refreshCalOnly(host){renderCal(host);updateSelInfo();}
 /* カレンダーを指でなぞって選択／解除（イベント委譲でhostに1回だけ付ける） */
 function enableCalPaint(host){
-  let painting=false,mode=null,mt=false,lastY=0;
+  let painting=false,mode=null,mt=false,lastY=0,startCell=null,moved=false;
   const avgY=t=>{let s=0;for(const p of t)s+=p.clientY;return s/t.length;};
-  // 2本指＝画面を上下にスクロール（1本指の選択と競合させない）
-  host.addEventListener("touchstart",e=>{if(e.touches.length>=2){mt=true;painting=false;lastY=avgY(e.touches);}},{passive:true});
+  const reset=()=>{painting=false;mode=null;startCell=null;moved=false;};
+  // 2本指＝画面を上下にスクロール。触れた瞬間に保留中の選択を破棄し、誤選択を防ぐ
+  host.addEventListener("touchstart",e=>{if(e.touches.length>=2){mt=true;reset();lastY=avgY(e.touches);}},{passive:true});
   host.addEventListener("touchmove",e=>{if(mt&&e.touches.length>=2){const y=avgY(e.touches);window.scrollBy(0,lastY-y);lastY=y;}},{passive:true});
   host.addEventListener("touchend",e=>{if(e.touches.length<2)mt=false;},{passive:true});
-  const dayAt=(x,y)=>{const e=document.elementFromPoint(x,y);const d=e&&e.closest?e.closest(".d"):null;return d&&!d.classList.contains("past")?d:null;};
-  const apply=d=>{const iso=d.getAttribute("data-iso");if(mode){CRE.dates.add(iso);d.classList.add("sel");}else{CRE.dates.delete(iso);d.classList.remove("sel");}};
-  host.addEventListener("pointerdown",e=>{if(mt)return;const d=e.target.closest(".d");if(!d||d.classList.contains("past"))return;e.preventDefault();mode=!CRE.dates.has(d.getAttribute("data-iso"));painting=true;apply(d);updateSelInfo();try{host.setPointerCapture(e.pointerId);}catch(_){}});
-  host.addEventListener("pointermove",e=>{if(mt||!painting)return;const d=dayAt(e.clientX,e.clientY);if(d){const iso=d.getAttribute("data-iso"),has=CRE.dates.has(iso);if((mode&&!has)||(!mode&&has)){apply(d);updateSelInfo();}}});
-  const end=()=>{painting=false;mode=null;};
-  host.addEventListener("pointerup",end);host.addEventListener("pointercancel",end);
+  const dayAt=(x,y)=>{const el2=document.elementFromPoint(x,y);const d=el2&&el2.closest?el2.closest(".d"):null;return d&&!d.classList.contains("past")?d:null;};
+  const applyTo=d=>{const iso=d.getAttribute("data-iso");if(mode){CRE.dates.add(iso);d.classList.add("sel");}else{CRE.dates.delete(iso);d.classList.remove("sel");}updateSelInfo();};
+  // pointerdownでは即選択せず「保留」。指1本の移動 or 離した時に確定（2本指なら破棄済み）
+  host.addEventListener("pointerdown",e=>{if(mt)return;const d=e.target.closest(".d");if(!d||d.classList.contains("past"))return;e.preventDefault();mode=!CRE.dates.has(d.getAttribute("data-iso"));startCell=d;moved=false;painting=true;try{host.setPointerCapture(e.pointerId);}catch(_){}});
+  host.addEventListener("pointermove",e=>{if(mt||!painting)return;if(!moved){applyTo(startCell);moved=true;}const d=dayAt(e.clientX,e.clientY);if(d){const iso=d.getAttribute("data-iso"),has=CRE.dates.has(iso);if((mode&&!has)||(!mode&&has))applyTo(d);}});
+  host.addEventListener("pointerup",()=>{if(!mt&&painting&&!moved&&startCell)applyTo(startCell);reset();});
+  host.addEventListener("pointercancel",reset);
 }
 function toggleWeekday(gd){const days=calDays().filter(d=>!d.past&&new Date(d.iso+"T00:00:00").getDay()===gd);const allSel=days.length&&days.every(d=>CRE.dates.has(d.iso));days.forEach(d=>{if(allSel)CRE.dates.delete(d.iso);else CRE.dates.add(d.iso);});if(window.__refreshCal)window.__refreshCal();}
 function updateSelInfo(){const info=$("#selInfo");if(info){const n=CRE.dates.size;info.innerHTML=n?" 現在 <span class='selcount'>"+n+"日</span> 選択中":"";}}
@@ -618,19 +629,21 @@ function buildGrid(kind){
 }
 function symbol(v){return v===2?"○":v===1?"△":"×";}
 function enablePaint(wrap){
-  let painting=false,paintVal=null,mt=false,lx=0,ly=0;
+  let painting=false,paintVal=null,mt=false,lx=0,ly=0,startCell=null,moved=false;
   const avg=(t,a)=>{let s=0;for(const p of t)s+=p[a];return s/t.length;};
-  // 2本指＝表を左右／画面を上下にスクロール（1本指の入力と競合させない）
-  wrap.addEventListener("touchstart",e=>{if(e.touches.length>=2){mt=true;painting=false;lx=avg(e.touches,"clientX");ly=avg(e.touches,"clientY");}},{passive:true});
+  const reset=()=>{painting=false;paintVal=null;startCell=null;moved=false;};
+  // 2本指＝表を左右／画面を上下にスクロール。触れた瞬間に保留中の入力を破棄し誤入力を防ぐ
+  wrap.addEventListener("touchstart",e=>{if(e.touches.length>=2){mt=true;reset();lx=avg(e.touches,"clientX");ly=avg(e.touches,"clientY");}},{passive:true});
   wrap.addEventListener("touchmove",e=>{if(mt&&e.touches.length>=2){const x=avg(e.touches,"clientX"),y=avg(e.touches,"clientY");wrap.scrollLeft+=lx-x;window.scrollBy(0,ly-y);lx=x;ly=y;}},{passive:true});
   wrap.addEventListener("touchend",e=>{if(e.touches.length<2)mt=false;},{passive:true});
   const cellAt=(x,y)=>{const e=document.elementFromPoint(x,y);return e&&e.closest?e.closest(".cell"):null;};
   const setCell=(td,v)=>{const k=td.getAttribute("data-k");MY.cells[k]=v;td.className="cell paint v"+v;td.textContent=symbol(v);};
   const cycle=v=>v===0?2:v===2?1:0;
-  wrap.addEventListener("pointerdown",e=>{if(mt)return;const td=e.target.closest(".cell");if(!td)return;e.preventDefault();const k=td.getAttribute("data-k");paintVal=cycle(MY.cells[k]||0);painting=true;setCell(td,paintVal);try{wrap.setPointerCapture(e.pointerId);}catch(_){}});
-  wrap.addEventListener("pointermove",e=>{if(mt||!painting)return;const td=cellAt(e.clientX,e.clientY);if(td&&wrap.contains(td)&&(MY.cells[td.getAttribute("data-k")]||0)!==paintVal)setCell(td,paintVal);});
-  const end=()=>{painting=false;paintVal=null;};
-  wrap.addEventListener("pointerup",end);wrap.addEventListener("pointercancel",end);
+  // pointerdownでは即入力せず「保留」。指1本の移動 or 離した時に確定（2本指なら破棄済み）
+  wrap.addEventListener("pointerdown",e=>{if(mt)return;const td=e.target.closest(".cell");if(!td)return;e.preventDefault();paintVal=cycle(MY.cells[td.getAttribute("data-k")]||0);startCell=td;moved=false;painting=true;try{wrap.setPointerCapture(e.pointerId);}catch(_){}});
+  wrap.addEventListener("pointermove",e=>{if(mt||!painting)return;if(!moved){setCell(startCell,paintVal);moved=true;}const td=cellAt(e.clientX,e.clientY);if(td&&wrap.contains(td)&&(MY.cells[td.getAttribute("data-k")]||0)!==paintVal)setCell(td,paintVal);});
+  wrap.addEventListener("pointerup",()=>{if(!mt&&painting&&!moved&&startCell)setCell(startCell,paintVal);reset();});
+  wrap.addEventListener("pointercancel",reset);
 }
 
 /* =========================================================
@@ -638,7 +651,7 @@ function enablePaint(wrap){
 ========================================================= */
 function computeAgg(store){
   store=store||ANS;
-  const names=Object.keys(store);const total=names.length;const cells={},score={};let best=0;
+  const names=Object.keys(store).filter(n=>!FILTER.size||FILTER.has(n));const total=names.length;const cells={},score={};let best=0;
   rows(EV).forEach((r,ri)=>cols(EV).forEach((c,ci)=>{const k=ri+"_"+ci;cells[k]={o:0,t:0,x:0};score[k]=0;}));
   names.forEach(n=>{const cel=store[n].cells||{};for(const k in cells){const v=cel[k]||0;if(v===2){cells[k].o++;score[k]+=1;}else if(v===1){cells[k].t++;score[k]+=0.5;}else cells[k].x++;}});
   for(const k in score)if(score[k]>best)best=score[k];
@@ -665,8 +678,15 @@ function viewResult(app){
     app.append(el("section",{class:"card",style:"border-color:var(--accent)"},el("div",{style:"display:flex;gap:10px;align-items:center;flex-wrap:wrap"},el("div",{style:"flex:1;min-width:180px"},el("div",{style:"font-weight:800"},"あなたの回答を主催者に送る"),el("div",{class:"subtle"},"別の端末で集計している場合は、このコードをLINEで送ってください。")),el("button",{class:"btn primary sm",onclick:async()=>{await copy(myAnswerCode());toast("回答コードをコピーしました");}},"回答コードをコピー"))));
   }
 
-  const gcard=el("section",{class:"card"},el("div",{style:"display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"},el("h2",{style:"font-size:15px"},"空き状況ヒートマップ"),el("span",{class:"subtle"},"マスをタップで内訳")),buildGrid("result"));
-  if(agg.names.length)gcard.append(el("div",{},el("div",{class:"subtle",style:"margin:12px 0 6px;font-weight:700"},"回答した人"),peopleRow(agg.names,store)));
+  const allNames=Object.keys(store);
+  const gcard=el("section",{class:"card"},el("div",{style:"display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"},el("h2",{style:"font-size:15px"},"空き状況ヒートマップ"),el("span",{class:"subtle"},"マスをタップで内訳")));
+  if(FILTER.size)gcard.append(el("div",{class:"filternote"},el("span",{},"👥 "+[...FILTER].map(esc).join("・")+" の "+FILTER.size+"人だけで表示中"),el("button",{class:"btn ghost sm",style:"margin-left:auto",onclick:()=>{FILTER.clear();render();}},"すべて表示")));
+  gcard.append(buildGrid("result"));
+  if(allNames.length){
+    gcard.append(el("div",{},el("div",{class:"subtle",style:"margin:12px 0 6px;font-weight:700"},"回答した人 ",el("span",{style:"font-weight:400"},"・タップで絞り込み／長押しでその人の予定を強調")),peopleRow(allNames,store)));
+    const withC=allNames.filter(n=>store[n].comment);
+    if(withC.length)gcard.append(el("div",{class:"cmts"},...withC.map(n=>el("div",{class:"cmt"},el("b",{},"💬 "+esc(n)),"「"+esc(store[n].comment)+"」"))));
+  }
   app.append(gcard);
 
   // 作成者だけの代理入力・編集・削除
@@ -723,7 +743,25 @@ function viewResult(app){
 function stat(k,v,u){return el("div",{class:"stat"},el("div",{class:"k"},k),el("div",{class:"v tnum"},v," ",el("small",{},u)));}
 function countAllYes(agg){let n=0;for(const k in agg.cells)if(agg.total>0&&agg.cells[k].o===agg.total)n++;return n;}
 function slotLabel(r,c){return c.label+"("+c.sub+") "+r.label;}
-function peopleRow(names,store){const box=el("div",{class:"people"});const me=localStorage.getItem(nameKey);names.forEach(n=>{const cm=store[n].comment;const p=el("span",{class:"pill"+(n===me?" me":""),title:cm||""},n+(cm?" 💬":""));p.addEventListener("click",()=>{if(cm)showText(n,cm);});box.append(p);});return box;}
+function toggleFilter(n){if(FILTER.has(n))FILTER.delete(n);else FILTER.add(n);render();}
+function highlightPerson(name){const cells=(ANS[name]||{}).cells||{};document.querySelectorAll("#app .matrix-wrap td[data-k]").forEach(td=>{const v=cells[td.getAttribute("data-k")]||0;td.classList.toggle("hi-o",v===2);td.classList.toggle("hi-t",v===1);});}
+function clearHighlight(){document.querySelectorAll("#app .matrix-wrap td.hi-o,#app .matrix-wrap td.hi-t").forEach(td=>td.classList.remove("hi-o","hi-t"));}
+function peopleRow(names,store){
+  const box=el("div",{class:"people"});const me=localStorage.getItem(nameKey);
+  names.forEach(n=>{
+    const cm=store[n].comment;
+    const p=el("span",{class:"pill"+(n===me?" me":"")+(FILTER.has(n)?" on":""),title:cm||""},n+(cm?" 💬":""));
+    let timer=null,held=false;
+    const startHold=()=>{held=false;timer=setTimeout(()=>{held=true;p.classList.add("holding");highlightPerson(n);},220);};
+    const cancelHold=()=>{clearTimeout(timer);if(held){held=false;p.classList.remove("holding");clearHighlight();}};
+    p.addEventListener("pointerdown",e=>{e.preventDefault();startHold();});
+    p.addEventListener("pointerup",()=>{const wasHold=held;clearTimeout(timer);if(wasHold){held=false;p.classList.remove("holding");clearHighlight();}else{toggleFilter(n);}});
+    p.addEventListener("pointerleave",cancelHold);
+    p.addEventListener("pointercancel",cancelHold);
+    box.append(p);
+  });
+  return box;
+}
 function importAnswer(){
   const raw=$("#impbox").value.trim();if(!raw){toast("回答コードを貼り付けてください");return;}
   let n=0;
@@ -757,7 +795,6 @@ function showCellDetail(key,r,c){
   openPop(el("div",{},el("h3",{},slotLabel(r,c)),el("p",{class:"subtle",style:"margin:0 0 6px"},o.length+"人が○ / "+t.length+"人が△ / "+x.length+"人が×"),grp("○ 行ける",o),grp("△ たぶん",t),grp("× 無理",x)));
 }
 function grp(title,arr){const g=el("div",{class:"grp"});g.append(el("div",{class:"gh"},title));if(!arr.length)g.append(el("span",{class:"subtle"},"—"));else{const box=el("div",{class:"people"});arr.forEach(n=>box.append(el("span",{class:"pill"},n)));g.append(box);}return g;}
-function showText(name,txt){openPop(el("div",{},el("h3",{},name),el("p",{style:"margin-top:6px;white-space:pre-wrap"},txt)));}
 function openPop(content){const back=el("div",{class:"pop-back",onclick:e=>{if(e.target===back)close();}});const pop=el("div",{class:"pop"});pop.append(content,el("div",{style:"margin-top:16px"},el("button",{class:"btn ghost block",onclick:close},"閉じる")));back.append(pop);$("#pop").append(back);function close(){back.remove();}}
 
 /* ---------- calendar export ---------- */
