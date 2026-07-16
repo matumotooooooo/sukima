@@ -115,7 +115,17 @@
   .cal th:hover{color:var(--accent);background:var(--accent-soft)}
   .cal th.sat{color:var(--sat)} .cal th.sun{color:var(--sun)}
   .cal td{text-align:center;padding:3px 2px}
-  .cal .d{width:100%;aspect-ratio:1/1;max-width:46px;margin:0 auto;display:grid;place-items:center;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;color:var(--ink);border:1.5px solid transparent;position:relative}
+  .cal .d{width:100%;aspect-ratio:1/1;max-width:46px;margin:0 auto;display:grid;place-items:center;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;color:var(--ink);border:1.5px solid transparent;position:relative;touch-action:none}
+  .calnav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+  .calnav-btn{border:1.5px solid var(--line-strong);background:var(--surface);color:var(--ink);border-radius:9px;padding:7px 11px;font-weight:700;font-size:12.5px;cursor:pointer}
+  .calnav-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+  .calnav-btn:disabled{opacity:.4;cursor:not-allowed}
+  .calnav-range{font-weight:800;font-size:13px;color:var(--ink);font-variant-numeric:tabular-nums}
+  .gridnav{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px}
+  .gnav{border:1.5px solid var(--line-strong);background:var(--surface);color:var(--ink);width:40px;height:34px;border-radius:9px;font-size:18px;font-weight:800;cursor:pointer;line-height:1}
+  .gnav:hover{border-color:var(--accent);color:var(--accent)}
+  .gridnav-hint{font-size:12px;color:var(--muted)}
+  .proxyname{background:var(--accent-soft);border:1.5px solid var(--accent);color:var(--accent);border-radius:10px;padding:11px 12px;font-weight:800}
   .cal .d:hover{background:var(--surface-2)}
   .cal .d.sel{background:var(--accent);color:var(--accent-ink);box-shadow:0 3px 10px rgba(var(--heat),.35)}
   .cal .d.sel:hover{background:var(--accent)}
@@ -257,12 +267,19 @@ async function sbFetch(path,opts){const r=await fetch(sbBase()+"/rest/v1/"+path,
 async function remoteSaveEvent(ev){await sbFetch("events",{method:"POST",headers:sbHeaders({Prefer:"resolution=merge-duplicates,return=minimal"}),body:JSON.stringify({id:ev.id,data:packEvent(ev)})});}
 async function remoteLoadEvent(id){const r=await sbFetch("events?select=data&id=eq."+encodeURIComponent(id),{headers:sbHeaders()});const rows=await r.json();return rows.length?unpackEvent(rows[0].data):null;}
 async function remoteUpsertAnswer(eventId,name,cells,comment){await sbFetch("answers",{method:"POST",headers:sbHeaders({Prefer:"resolution=merge-duplicates,return=minimal"}),body:JSON.stringify({event_id:eventId,name,cells,comment})});}
+async function remoteDeleteAnswer(eventId,name){await sbFetch("answers?event_id=eq."+encodeURIComponent(eventId)+"&name=eq."+encodeURIComponent(name),{method:"DELETE",headers:sbHeaders({Prefer:"return=minimal"})});}
 async function remoteLoadAnswers(eventId){const r=await sbFetch("answers?select=name,cells,comment&event_id=eq."+encodeURIComponent(eventId),{headers:sbHeaders()});const rows=await r.json();const out={};rows.forEach(x=>out[x.name]={cells:x.cells||{},comment:x.comment||""});return out;}
 
 /* ---------- unified data layer (in-memory ANS) ---------- */
 let ANS={};
 async function fetchAnswers(){if(!EV)return ANS={};if(remoteEnabled()){try{ANS=await remoteLoadAnswers(EV.id);}catch(e){toast("集計の取得に失敗しました");}}else{ANS=loadAnswers(EV.id);}return ANS;}
 async function putAnswer(name,cells,comment){if(remoteEnabled()){await remoteUpsertAnswer(EV.id,name,cells,comment);}else{const s=loadAnswers(EV.id);s[name]={cells,comment,ts:Date.now()};saveAnswers(EV.id,s);}ANS[name]={cells,comment};}
+async function delAnswer(name){if(remoteEnabled()){await remoteDeleteAnswer(EV.id,name);}else{const s=loadAnswers(EV.id);delete s[name];saveAnswers(EV.id,s);}delete ANS[name];}
+
+/* ---------- 作成者（管理者）判定：作成した端末にだけ印を付ける ---------- */
+const adminKey = id=>"sukima:admin:"+id;
+function markAdmin(id){try{localStorage.setItem(adminKey(id),"1");}catch(e){}}
+function isAdmin(){return !!(EV&&localStorage.getItem(adminKey(EV.id))==="1");}
 
 /* ---------- theme ---------- */
 const THEME_KEY="sukima:theme";
@@ -281,8 +298,8 @@ let EV=null, SCREEN="home", SUPPRESS_HASH=false;
 function cols(ev){return ev.cols;}
 function rows(ev){return ev.rows;}
 function shareURL(){const base=location.href.split("#")[0];return remoteEnabled()?base+"#id="+EV.id:base+"#e="+encEvent(EV);}
-function go(screen){stopPoll();SCREEN=screen;render();window.scrollTo(0,0);}
-async function nav(screen){stopPoll();SCREEN=screen;render();window.scrollTo(0,0);try{await fetchAnswers();}catch(e){}if(SCREEN===screen){render();if(screen==="result")startPoll();}}
+function go(screen){stopPoll();if(PROXY&&screen!=="respond")endProxy();SCREEN=screen;render();window.scrollTo(0,0);}
+async function nav(screen){stopPoll();if(PROXY&&screen!=="respond")endProxy();SCREEN=screen;render();window.scrollTo(0,0);try{await fetchAnswers();}catch(e){}if(SCREEN===screen){render();if(screen==="result")startPoll();}}
 let POLL=null;
 function startPoll(){stopPoll();if(!remoteEnabled())return;POLL=setInterval(async()=>{if(SCREEN!=="result"){stopPoll();return;}const before=JSON.stringify(ANS);await fetchAnswers();if(SCREEN==="result"&&JSON.stringify(ANS)!==before){const y=window.scrollY;render();window.scrollTo(0,y);}},6000);}
 function stopPoll(){if(POLL){clearInterval(POLL);POLL=null;}}
@@ -323,7 +340,7 @@ function viewHome(app){
         ["自由な時間帯","終日でも、9〜21時でも、15〜18時でも。開始・終了・刻みを自由に指定。"],
         ["ヒートマップ集計","色の濃さ＝空いてる人数。イチオシ枠をアンバーで自動ハイライト。"],
         ["締切をいちばん上に","リンクを開いてまず目に入る位置に締切を表示。コメントや内訳も。"],
-        ["そのまま予定化","決まった枠はカレンダー(.ics / Googleカレンダー)へ即追加。ダークモード対応。"]
+        ["そのまま予定に登録","決まった枠を、スマホのカレンダー（iPhone標準／Googleカレンダー）にワンタップで追加。ダークモード対応。"]
       ])
     )
   );
@@ -336,6 +353,7 @@ function ul(items){const box=el("div",{style:"display:grid;gap:10px"});for(const
 ========================================================= */
 const CRE={title:"",note:"",deadline:"",dates:new Set(),slot:"day_night",cs:9,ce:21,cstep:120};
 const CAL_WEEKS=6;
+let CAL_OFFSET=0; // 表示中の週オフセット（0=今週から。◀▶で±4週）
 
 function viewCreate(app){
   const c=el("section",{class:"card"});
@@ -354,9 +372,11 @@ function viewCreate(app){
   calBlock.append(quick);
   const calHost=el("div",{id:"calHost"});
   calBlock.append(calHost);
-  calBlock.append(el("div",{class:"calhint"},"曜日の見出しをタップすると、その曜日をまとめて選べます。",el("span",{id:"selInfo"})));
+  calBlock.append(el("div",{class:"calhint"},"日付を指でなぞると、まとめて選択／解除できます。曜日の見出しタップでその曜日を一括選択、◀▶でもっと先の週も表示。",el("span",{id:"selInfo"})));
   c.append(calBlock);
+  CAL_OFFSET=0;
   renderCal(calHost);
+  enableCalPaint(calHost);
   updateSelInfo();
 
   // time slots
@@ -398,18 +418,38 @@ function viewCreate(app){
   function selectWeekdays(wdList){const days=calDays();days.forEach(d=>{if(d.past)return;const wd=(new Date(d.iso+"T00:00:00").getDay()+6)%7;if(wdList.includes(wd))CRE.dates.add(d.iso);});refreshCal();}
   window.__refreshCal=refreshCal;
 }
-function calStart(){const t=new Date();t.setHours(0,0,0,0);const mon=new Date(t);mon.setDate(t.getDate()-((t.getDay()+6)%7));return mon;}
-function calDays(){const start=calStart();const today=isoLocal(new Date());const out=[];for(let i=0;i<CAL_WEEKS*7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const iso=isoLocal(d);out.push({iso,day:d.getDate(),past:iso<today,today:iso===today});}return out;}
+function calStart(){const t=new Date();t.setHours(0,0,0,0);const mon=new Date(t);mon.setDate(t.getDate()-((t.getDay()+6)%7)+CAL_OFFSET*7);return mon;}
+function calDays(){const start=calStart();const today=isoLocal(new Date());const out=[];for(let i=0;i<CAL_WEEKS*7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const iso=isoLocal(d);out.push({iso,day:d.getDate(),month:d.getMonth()+1,past:iso<today,today:iso===today});}return out;}
+function fmtMD(iso){const d=new Date(iso+"T00:00:00");return (d.getMonth()+1)+"/"+d.getDate();}
 function renderCal(host){
   host.innerHTML="";
   const days=calDays();
+  // 期間ナビ
+  const navd=el("div",{class:"calnav"});
+  navd.append(
+    el("button",{class:"calnav-btn",type:"button",disabled:CAL_OFFSET<=0?"":null,onclick:()=>{CAL_OFFSET=Math.max(0,CAL_OFFSET-4);refreshCalOnly(host);}},"‹ 前の4週"),
+    el("span",{class:"calnav-range"},fmtMD(days[0].iso)+" 〜 "+fmtMD(days[days.length-1].iso)),
+    el("button",{class:"calnav-btn",type:"button",onclick:()=>{CAL_OFFSET+=4;refreshCalOnly(host);}},"次の4週 ›")
+  );
+  host.append(navd);
   const table=el("table",{class:"cal"});
   const thead=el("thead");const htr=el("tr");
   WD.forEach((w,i)=>{const th=el("th",{class:i===5?"sat":i===6?"sun":"",title:w+"曜をまとめて選択",onclick:()=>toggleWeekday(i)},w);htr.append(th);});
   thead.append(htr);table.append(thead);
   const tb=el("tbody");
-  for(let wk=0;wk<CAL_WEEKS;wk++){const tr=el("tr");for(let dd=0;dd<7;dd++){const d=days[wk*7+dd];const cls="d"+(d.past?" past":"")+(CRE.dates.has(d.iso)?" sel":"")+(d.today?" today":"");const cell=el("div",{class:cls,"data-iso":d.iso},String(d.day));if(!d.past)cell.addEventListener("click",()=>{if(CRE.dates.has(d.iso))CRE.dates.delete(d.iso);else CRE.dates.add(d.iso);cell.classList.toggle("sel");updateSelInfo();});tr.append(el("td",{},cell));}tb.append(tr);}
+  for(let wk=0;wk<CAL_WEEKS;wk++){const tr=el("tr");for(let dd=0;dd<7;dd++){const d=days[wk*7+dd];const cls="d"+(d.past?" past":"")+(CRE.dates.has(d.iso)?" sel":"")+(d.today?" today":"");const cell=el("div",{class:cls,"data-iso":d.iso},String(d.day));tr.append(el("td",{},cell));}tb.append(tr);}
   table.append(tb);host.append(table);
+}
+function refreshCalOnly(host){renderCal(host);updateSelInfo();}
+/* カレンダーを指でなぞって選択／解除（イベント委譲でhostに1回だけ付ける） */
+function enableCalPaint(host){
+  let painting=false,mode=null;
+  const dayAt=(x,y)=>{const e=document.elementFromPoint(x,y);const d=e&&e.closest?e.closest(".d"):null;return d&&!d.classList.contains("past")?d:null;};
+  const apply=d=>{const iso=d.getAttribute("data-iso");if(mode){CRE.dates.add(iso);d.classList.add("sel");}else{CRE.dates.delete(iso);d.classList.remove("sel");}};
+  host.addEventListener("pointerdown",e=>{const d=e.target.closest(".d");if(!d||d.classList.contains("past"))return;e.preventDefault();mode=!CRE.dates.has(d.getAttribute("data-iso"));painting=true;apply(d);updateSelInfo();try{host.setPointerCapture(e.pointerId);}catch(_){}});
+  host.addEventListener("pointermove",e=>{if(!painting)return;const d=dayAt(e.clientX,e.clientY);if(d){const iso=d.getAttribute("data-iso"),has=CRE.dates.has(iso);if((mode&&!has)||(!mode&&has)){apply(d);updateSelInfo();}}});
+  const end=()=>{painting=false;mode=null;};
+  host.addEventListener("pointerup",end);host.addEventListener("pointercancel",end);
 }
 function toggleWeekday(wd){const days=calDays().filter(d=>!d.past&&(new Date(d.iso+"T00:00:00").getDay()+6)%7===wd);const allSel=days.length&&days.every(d=>CRE.dates.has(d.iso));days.forEach(d=>{if(allSel)CRE.dates.delete(d.iso);else CRE.dates.add(d.iso);});if(window.__refreshCal)window.__refreshCal();}
 function updateSelInfo(){const info=$("#selInfo");if(info){const n=CRE.dates.size;info.innerHTML=n?" 現在 <span class='selcount'>"+n+"日</span> 選択中":"";}}
@@ -433,7 +473,7 @@ async function createEvent(){
   const ds=[...CRE.dates].sort();
   const colsA=ds.map(iso=>{const dt=new Date(iso+"T00:00:00");return {label:(dt.getMonth()+1)+"/"+dt.getDate(),sub:WD[(dt.getDay()+6)%7],date:iso};});
   EV={v:2,id:rid(),title:CRE.title.trim(),note:CRE.note.trim(),mode:"date",cols:colsA,rows:rs,deadline:CRE.deadline||"",createdAt:Date.now()};
-  ANS={};
+  ANS={};markAdmin(EV.id);
   if(remoteEnabled()){try{await remoteSaveEvent(EV);}catch(e){toast("作成に失敗しました。バックエンド設定を確認してください");return;}SUPPRESS_HASH=true;location.hash="id="+EV.id;}
   else{SUPPRESS_HASH=true;location.hash="e="+encEvent(EV);}
   go("share");
@@ -468,18 +508,24 @@ function shareLine(url,text){const u="https://line.me/R/msg/text/?"+encodeURICom
    RESPOND
 ========================================================= */
 let MY={name:"",cells:{},comment:""};
+let PROXY=null;        // 代理入力中の相手の名前（作成者専用）
+let MY_BACKUP=null;    // 代理入力の間、自分の入力内容を退避
+function startProxy(name){MY_BACKUP={...MY,cells:{...MY.cells}};PROXY=name;MY={name,cells:{...((ANS[name]||{}).cells||{})},comment:(ANS[name]||{}).comment||""};nav("respond");}
+function endProxy(){if(MY_BACKUP){MY=MY_BACKUP;MY_BACKUP=null;}PROXY=null;}
 function viewRespond(app){
   const store=ANS;
-  const savedName=localStorage.getItem(nameKey)||"";
-  if(!MY.name)MY.name=savedName;
-  if(MY.name&&store[MY.name]){MY.cells={...store[MY.name].cells};MY.comment=store[MY.name].comment||"";}
+  if(PROXY){/* 代理入力：MY は startProxy で相手ぶんに差し替え済み */}
+  else{const savedName=localStorage.getItem(nameKey)||"";if(!MY.name)MY.name=savedName;if(MY.name&&store[MY.name]){MY.cells={...store[MY.name].cells};MY.comment=store[MY.name].comment||"";}}
   const overdue=isOverdue();
+  const nameFld = PROXY
+    ? el("div",{class:"fld"},el("span",{class:"lbl"},"代理入力する相手"),el("div",{class:"proxyname"},"👤 "+esc(PROXY)+" さんの代わりに入力中"))
+    : el("label",{class:"fld"},el("span",{class:"lbl"},"あなたの名前"),input("text",MY.name,"例）ひろし",v=>{MY.name=v;}));
   app.append(el("section",{class:"card"},
-    el("div",{class:"eyebrow"},"空いてる時間を教えて"),
+    el("div",{class:"eyebrow"},PROXY?"代理で入力（作成者）":"空いてる時間を教えて"),
     el("h1",{style:"font-size:20px;margin:6px 0 2px"},esc(EV.title)),
     EV.note?el("p",{class:"lead"},esc(EV.note)):null,
     deadlineLine(),
-    el("label",{class:"fld"},el("span",{class:"lbl"},"あなたの名前"),input("text",MY.name,"例）ひろし",v=>{MY.name=v;})),
+    nameFld,
     el("p",{class:"subtle",style:"margin:8px 0 0"},"マスをタップで ○→△→× と切り替え。指でなぞれば一気に塗れます。")
   ));
   app.append(el("section",{class:"card"},
@@ -487,12 +533,20 @@ function viewRespond(app){
     buildGrid("respond"),
     el("label",{class:"fld"},el("span",{class:"lbl"},"ひとこと ",el("span",{class:"opt"},"任意")),textarea(MY.comment,"例）金曜は20時以降なら🙆",v=>MY.comment=v))
   ));
-  renderBar([el("button",{class:"btn ghost sm",onclick:()=>nav("result")},"集計を見る"),el("div",{style:"flex:1"}),el("button",{class:"btn primary",onclick:submitAnswer},overdue?"締切後だけど回答":"回答を保存 →")]);
+  renderBar([el("button",{class:"btn ghost sm",onclick:()=>{if(PROXY)endProxy();nav("result");}},PROXY?"やめる":"集計を見る"),el("div",{style:"flex:1"}),el("button",{class:"btn primary",onclick:submitAnswer},PROXY?"代理で保存 →":(overdue?"締切後だけど回答":"回答を保存 →"))]);
 }
 function deadlineLine(){if(!EV.deadline)return null;const over=isOverdue();return el("div",{class:"deadline"+(over?" over":""),style:"margin-top:8px"},(over?"⏰ 締切を過ぎています（":"⏳ 回答締切：")+fmtDate(EV.deadline)+(over?"）":""));}
 function isOverdue(){if(!EV.deadline)return false;const d=new Date(EV.deadline+"T23:59:59");return Date.now()>d.getTime();}
 function legend(){return el("div",{class:"legend"},el("b",{},el("span",{class:"sym o"},"○"),"行ける"),el("b",{},el("span",{class:"sym t"},"△"),"たぶん/条件付き"),el("b",{},el("span",{class:"sym x"},"×"),"無理（空欄）"));}
-async function submitAnswer(){if(!MY.name.trim()){toast("名前を入れてください");return;}const nm=MY.name.trim();localStorage.setItem(nameKey,nm);try{await putAnswer(nm,MY.cells,MY.comment.trim());}catch(e){toast("保存に失敗しました。通信環境を確認してください");return;}toast("回答を保存しました");nav("result");}
+async function submitAnswer(){
+  const nm=(PROXY||MY.name||"").trim();
+  if(!nm){toast("名前を入れてください");return;}
+  if(!PROXY)localStorage.setItem(nameKey,nm);
+  try{await putAnswer(nm,MY.cells,MY.comment.trim());}catch(e){toast("保存に失敗しました。通信環境を確認してください");return;}
+  const wasProxy=!!PROXY;if(wasProxy)endProxy();
+  toast(wasProxy?nm+"さんの回答を保存しました":"回答を保存しました");
+  nav("result");
+}
 
 /* ---------- grid builder ---------- */
 function buildGrid(kind){
@@ -530,7 +584,15 @@ function buildGrid(kind){
   });
   table.append(tbody);wrap.append(table);
   if(kind==="respond")enablePaint(wrap);
-  return wrap;
+  const box=el("div",{});
+  const gnav=el("div",{class:"gridnav",style:"display:none"},
+    el("button",{class:"gnav",type:"button","aria-label":"左へ",onclick:()=>wrap.scrollBy({left:-Math.round(wrap.clientWidth*0.7),behavior:"smooth"})},"‹"),
+    el("span",{class:"gridnav-hint"},"候補日が多いときは ‹ › で移動"),
+    el("button",{class:"gnav",type:"button","aria-label":"右へ",onclick:()=>wrap.scrollBy({left:Math.round(wrap.clientWidth*0.7),behavior:"smooth"})},"›")
+  );
+  box.append(wrap,gnav);
+  requestAnimationFrame(()=>{if(wrap.scrollWidth>wrap.clientWidth+4)gnav.style.display="flex";});
+  return box;
 }
 function symbol(v){return v===2?"○":v===1?"△":"×";}
 function enablePaint(wrap){
@@ -580,6 +642,28 @@ function viewResult(app){
   if(agg.names.length)gcard.append(el("div",{},el("div",{class:"subtle",style:"margin:12px 0 6px;font-weight:700"},"回答した人"),peopleRow(agg.names,store)));
   app.append(gcard);
 
+  // 作成者だけの代理入力・編集・削除
+  if(isAdmin()){
+    const ac=el("section",{class:"card",style:"border-color:var(--accent)"});
+    ac.append(el("div",{class:"eyebrow"},"作成者メニュー"),el("h2",{style:"font-size:15px;margin:6px 0 4px"},"代理で入力・修正する"));
+    ac.append(el("p",{class:"subtle",style:"margin:0 0 10px"},"「土日はムリ」などLINEで伝えてきた人の予定を、あなたが代わりに入力できます。"));
+    const pin=el("input",{type:"text",placeholder:"相手の名前（例）たけし",style:"flex:1;min-width:150px"});
+    ac.append(el("div",{class:"row vcenter",style:"margin-bottom:6px"},pin,el("button",{class:"btn primary sm",onclick:()=>{const nm=pin.value.trim();if(!nm){toast("名前を入れてください");return;}if(store[nm]){toast(nm+"さんは既にいます。下の一覧から編集できます");return;}startProxy(nm);}},"この名前で代理入力")));
+    if(agg.names.length){
+      ac.append(el("div",{class:"subtle",style:"margin:10px 0 6px;font-weight:700"},"回答済みの人を修正 / 削除"));
+      const list=el("div",{style:"display:grid;gap:8px"});
+      agg.names.forEach(n=>list.append(el("div",{class:"row vcenter",style:"justify-content:space-between;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px 10px"},
+        el("span",{style:"font-weight:700"},esc(n)),
+        el("div",{class:"row tight"},
+          el("button",{class:"btn ghost sm",onclick:()=>startProxy(n)},"編集"),
+          el("button",{class:"btn ghost sm",style:"color:var(--no);border-color:var(--no)",onclick:()=>confirmDelete(n)},"削除")
+        )
+      )));
+      ac.append(list);
+    }
+    app.append(ac);
+  }
+
   if(remoteEnabled()){
     app.append(el("section",{class:"card"},
       el("h2",{style:"font-size:15px;margin-bottom:4px"},"みんなに回答してもらう"),
@@ -604,7 +688,7 @@ function viewResult(app){
   }
 
   if(bestSlots.length){
-    app.append(el("section",{class:"card"},el("h2",{style:"font-size:15px;margin-bottom:8px"},"この枠で決める"),el("div",{class:"row"},...bestSlots.slice(0,4).map(b=>el("button",{class:"btn ghost sm",onclick:()=>confirmSlot(b)},slotLabel(b.r,b.c)))),el("p",{class:"subtle",style:"margin:10px 0 0"},"確定した枠はカレンダー(.ics / Googleカレンダー)にそのまま追加できます。")));
+    app.append(el("section",{class:"card"},el("h2",{style:"font-size:15px;margin-bottom:8px"},"この枠で決める"),el("div",{class:"row"},...bestSlots.slice(0,4).map(b=>el("button",{class:"btn ghost sm",onclick:()=>confirmSlot(b)},slotLabel(b.r,b.c)))),el("p",{class:"subtle",style:"margin:10px 0 0"},"確定した枠は、スマホのカレンダー（iPhone標準／Googleカレンダー）にそのまま追加できます。")));
   }
 
   renderBar([el("button",{class:"btn ghost sm",onclick:()=>go("home")},"ホーム"),el("div",{style:"flex:1"}),el("button",{class:"btn primary",onclick:()=>nav("respond")},"回答する / 直す")]);
@@ -620,6 +704,15 @@ function importAnswer(){
   if(n){toast(n+"件を取り込みました");nav("result");}else toast("取り込めるコードがありませんでした");
 }
 function myAnswerCode(){return "a="+encAns({id:EV.id,name:MY.name.trim(),cells:MY.cells,comment:MY.comment.trim()});}
+function confirmDelete(name){
+  openPop(el("div",{},
+    el("h3",{},"「"+esc(name)+"」の回答を削除"),
+    el("p",{class:"subtle",style:"margin:6px 0 0"},"この人の回答を消します。元に戻せません。"),
+    el("div",{class:"row",style:"margin-top:14px"},
+      el("button",{class:"btn primary sm",style:"background:var(--no)",onclick:async(e)=>{const b=e.target;b.disabled=true;try{await delAnswer(name);}catch(_){toast("削除に失敗しました");b.disabled=false;return;}document.querySelectorAll(".pop-back").forEach(x=>x.remove());toast(name+"さんの回答を削除しました");nav("result");}},"削除する")
+    )
+  ));
+}
 
 /* ---------- popovers ---------- */
 function showCellDetail(key,r,c){
@@ -638,7 +731,8 @@ function confirmSlot(b){
   if(b.c.date){
     const start=new Date(b.c.date+"T00:00:00");start.setHours(b.r.h||10,b.r.m||0,0,0);
     const end=new Date(start);end.setHours(start.getHours()+(b.r.label==="終日"?9:2));
-    actions.append(el("div",{class:"row",style:"margin-top:12px"},el("button",{class:"btn primary sm",onclick:()=>downloadICS(EV.title,start,end)},".ics をダウンロード"),el("button",{class:"btn ghost sm",onclick:()=>window.open(gcalURL(EV.title,start,end),"_blank")},"Googleカレンダー")));
+    actions.append(el("p",{class:"subtle",style:"margin:10px 0 2px"},"下のボタンから、スマホのカレンダーにこの予定を追加できます。"));
+    actions.append(el("div",{class:"row",style:"margin-top:6px"},el("button",{class:"btn primary sm",onclick:()=>downloadICS(EV.title,start,end)},"iPhone / Macのカレンダーに追加"),el("button",{class:"btn ghost sm",onclick:()=>window.open(gcalURL(EV.title,start,end),"_blank")},"Googleカレンダーに追加")));
   }
   actions.append(el("div",{class:"row",style:"margin-top:10px"},el("button",{class:"btn line sm",onclick:()=>shareLine(shareURL(),"【決定】"+EV.title+" は「"+slotLabel(b.r,b.c)+"」になりました！")},"LINEで決定を共有")));
   openPop(actions);
