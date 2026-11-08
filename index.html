@@ -330,9 +330,6 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const remoteEnabled = ()=>!!(SUPABASE_URL && SUPABASE_ANON_KEY);
 function sbHeaders(extra){return Object.assign({apikey:SUPABASE_ANON_KEY,Authorization:"Bearer "+SUPABASE_ANON_KEY,"Content-Type":"application/json"},extra||{});}
 function sbBase(){return SUPABASE_URL.trim().replace(/\/+$/,"").replace(/\/rest\/v1$/,"");}
-/* このファイルのビルド識別子。デプロイが反映されたかを画面で確認できるようにする
-   （キャッシュに残った旧版と新版を、見た目でなく事実で切り分けるため） */
-const BUILD="v7 (2026-11-08)";
 /* 直近の通信エラー（診断画面で原因を特定するために保持。秘密情報は入らない） */
 let LAST_ERR=null;
 /* すべての通信は認可チェック内蔵のRPC経由（テーブル直アクセスは行わない） */
@@ -485,14 +482,14 @@ function syncHashScreen(){
   if(next!==h){SUPPRESS_HASH=true;location.hash=next;}
   touchHistory({id:EV.id,title:EV.title,h:currentHash()});
 }
-function go(screen){stopPoll();if(PROXY&&screen!=="respond")endProxy();if(screen!=="result")pickReset();MY_DIRTY=false;SCREEN=screen;render();syncHashScreen();window.scrollTo(0,0);}
-async function nav(screen){stopPoll();if(PROXY&&screen!=="respond")endProxy();if(screen!=="result")pickReset();FILTER.clear();MY_DIRTY=false;SCREEN=screen;render();syncHashScreen();window.scrollTo(0,0);try{await fetchAnswers();}catch(e){}if(SCREEN===screen){render();if(screen==="result")startPoll();}}
+function go(screen){if(screen==="diag"&&!ownerUnlocked())screen="owner";stopPoll();if(PROXY&&screen!=="respond")endProxy();if(screen!=="result")pickReset();MY_DIRTY=false;SCREEN=screen;render();syncHashScreen();window.scrollTo(0,0);}
+async function nav(screen){if(screen==="diag"&&!ownerUnlocked())screen="owner";stopPoll();if(PROXY&&screen!=="respond")endProxy();if(screen!=="result")pickReset();FILTER.clear();MY_DIRTY=false;SCREEN=screen;render();syncHashScreen();window.scrollTo(0,0);try{await fetchAnswers();}catch(e){}if(SCREEN===screen){render();if(screen==="result")startPoll();}}
 let POLL=null;
 function startPoll(){stopPoll();if(!remoteEnabled())return;POLL=setInterval(async()=>{if(SCREEN!=="result"){stopPoll();return;}if(PICK.on)return;const before=JSON.stringify(ANS);await fetchAnswers();if(SCREEN==="result"&&JSON.stringify(ANS)!==before){const y=window.scrollY;render();window.scrollTo(0,y);}},6000);}
 function stopPoll(){if(POLL){clearInterval(POLL);POLL=null;}}
 async function boot(){
   const h=location.hash;const mId=h.match(/[#&]id=([^&]+)/);const mE=h.match(/[#&]e=([^&]+)/);
-  if(/[#&]diag\b/.test(h)){SCREEN="diag";render();diagRun();return;}
+  if(/[#&]diag\b/.test(h)){SCREEN=ownerUnlocked()?"diag":"owner";render();if(SCREEN==="diag")diagRun();return;}
   if(/[#&]owner\b/.test(h)){SCREEN="owner";render();ownerLoad();return;}
   const mV=h.match(/[#&]v=([a-z]+)/);
   if(mId){
@@ -551,11 +548,6 @@ function viewHome(app){
   );
   const hist=historyCard();if(hist)app.insertBefore(hist,app.children[1]||null);
   backfillHistory();
-  /* 接続診断は運営側のための道具。回答するだけの人には出さない
-     （内部のしくみを匂わせないため）。この端末で調整を作ったことがある人にだけ表示する。
-     どの端末からでも #diag で開ける。 */
-  if(hasEverCreated())app.append(el("div",{class:"subtle",style:"text-align:center;margin:14px 0 4px;font-size:12px"},
-    el("button",{class:"btn ghost sm",style:"font-size:12px;padding:6px 12px",onclick:()=>{go("diag");diagRun();}},"接続を診断する（ビルド "+BUILD+"）")));
 }
 /* オーナー画面への入口は画面に出さない。ロゴを「5秒」長押しでのみ開く
    （連打やコピー目的の短い長押しでは開かないように） */
@@ -736,7 +728,7 @@ async function createEvent(){
   EV={v:2,id:rid(12),title:CRE.title.trim(),note:CRE.note.trim(),mode:"date",cols:colsA,rows:rs,deadline:CRE.deadline||"",createdAt:Date.now()};
   const ak=rid(24);EV.adminHash=await sha256hex(ak);   // 合鍵の平文は端末内のみ。サーバーへはハッシュだけ
   ANS={};markAdmin(EV.id);try{localStorage.setItem(adminSecretKey(EV.id),ak);}catch(e){}
-  if(remoteEnabled()){try{await remoteCreateEvent(EV,ak);}catch(e){toast("作成できません。"+rpcReason(e));go("diag");diagRun();return;}SUPPRESS_HASH=true;location.hash="id="+EV.id;}
+  if(remoteEnabled()){try{await remoteCreateEvent(EV,ak);}catch(e){toast("調整を作成できませんでした。時間をおいて再度お試しください。");go("home");return;}SUPPRESS_HASH=true;location.hash="id="+EV.id;}
   else{SUPPRESS_HASH=true;location.hash="e="+encEvent(EV);}
   touchHistory({id:EV.id,title:EV.title,h:currentHash(),role:"creator"});
   go("share");
@@ -1612,6 +1604,7 @@ function viewOwner(app){
   if(OWNER.err)head.append(el("div",{class:"note",style:"color:var(--no)"},OWNER.err));
   head.append(el("div",{class:"row",style:"margin-top:12px"},
     el("button",{class:"btn ghost sm",onclick:ownerLoad},"再読み込み"),
+    el("button",{class:"btn ghost sm",onclick:()=>{go("diag");diagRun();}},"接続を診断"),
     el("button",{class:"btn ghost sm",onclick:back},"ホームへ"),
     el("button",{class:"btn primary sm",style:"background:var(--no)",onclick:ownerLock},"🔒 ロックする")
   ));
@@ -1666,7 +1659,7 @@ function viewOwner(app){
 function decLabelOf(ev){const l=normDecs(ev.decisions);if(!l.length)return "";return l.map(decLabelOne).join("、")+(l.length>1?"（"+l.length+"件）":"");}
 
 function viewLoading(app){app.append(el("section",{class:"card"},el("div",{class:"eyebrow"},"読み込み中"),el("p",{class:"lead",style:"margin-top:8px"},"調整を読み込んでいます…")));}
-function viewNotFound(app){app.append(el("section",{class:"card"},el("div",{class:"eyebrow"},"見つかりません"),el("h1",{style:"font-size:20px;margin:6px 0"},"この調整リンクは開けませんでした"),el("p",{class:"lead"},"リンクが正しいか確認してください。作成者に再共有してもらうと直る場合があります。"),el("div",{class:"row",style:"margin-top:14px"},el("button",{class:"btn primary",onclick:()=>{SUPPRESS_HASH=true;location.hash="";go("home");}},"ホームへ"),el("button",{class:"btn ghost",onclick:()=>{go("diag");diagRun();}},"接続を診断する"))));}
+function viewNotFound(app){app.append(el("section",{class:"card"},el("div",{class:"eyebrow"},"見つかりません"),el("h1",{style:"font-size:20px;margin:6px 0"},"この調整リンクは開けませんでした"),el("p",{class:"lead"},"リンクが正しいか確認してください。作成者に再共有してもらうと直る場合があります。"),el("div",{class:"row",style:"margin-top:14px"},el("button",{class:"btn primary",onclick:()=>{SUPPRESS_HASH=true;location.hash="";go("home");}},"ホームへ"))));}
 
 /* =========================================================
    DIAG — 接続の自己診断（devtools無しで原因を特定するための画面）
@@ -1683,6 +1676,7 @@ async function diagProbe(label,path,body,expect){
   }catch(e){ return {label,status:0,ok:false,msg:"接続できません",ms:Date.now()-t0}; }
 }
 async function diagRun(){
+  if(!ownerUnlocked()){DIAG={running:false,rows:[],verdict:"オーナー用メニューから合言葉を入力してください"};SCREEN="owner";render();return;}
   if(!remoteEnabled()){DIAG={running:false,rows:[],verdict:"このビルドにはバックエンド設定が入っていません（オフライン版）"};render();return;}
   DIAG={running:true,rows:[],verdict:""};render();
   const rows=[];
@@ -1699,10 +1693,11 @@ async function diagRun(){
   else if([a,b,c].some(x=>x.status===401||x.status===403)) v="⚠ サーバーに拒否されました。SQLの実行権限（grant）が反映されていない可能性があります。supabase-secure.sql を再実行してください。";
   else if(a.status===0) v="⚠ サーバーに接続できません。通信環境か、URLの設定を確認してください。";
   else if(!d.ok) v="⚠ テーブルに直接アクセスできてしまいます。古いSQLのままです。supabase-secure.sql を実行してください。";
-  else v="✅ サーバー側は正常です。作成に失敗する場合は、アプリが古いキャッシュのままの可能性があります（下のビルド番号を確認してください）。";
+  else v="✅ サーバー側は正常です。作成に失敗する場合は、ページを再読み込みしてもう一度お試しください。";
   DIAG={running:false,rows,verdict:v};render();
 }
 function viewDiag(app){
+  if(!ownerUnlocked()){SCREEN="owner";viewOwner(app);return;}
   const card=el("section",{class:"card"});
   card.append(
     el("div",{class:"eyebrow"},"接続診断"),
@@ -1710,7 +1705,6 @@ function viewDiag(app){
     el("p",{class:"subtle",style:"margin:0 0 12px"},"調整の中身は表示しません。窓口が応答するかだけを確認します。")
   );
   const info=el("div",{class:"subtle",style:"margin-bottom:12px;line-height:1.7"});
-  info.append(el("div",{},"ビルド: ",el("b",{},BUILD)));
   info.append(el("div",{},"接続先: ",el("b",{},remoteEnabled()?sbBase().replace(/^https?:\/\//,""):"（未設定）")));
   card.append(info);
   if(DIAG.running)card.append(el("p",{class:"lead"},"確認中…"));
@@ -1726,7 +1720,7 @@ function viewDiag(app){
   if(LAST_ERR)card.append(el("div",{class:"subtle",style:"margin-top:12px;border-top:1px solid var(--line);padding-top:10px"},
     "直近のエラー: "+LAST_ERR.fn+" / HTTP "+LAST_ERR.status+(LAST_ERR.code?" / "+LAST_ERR.code:"")+(LAST_ERR.message?" / "+LAST_ERR.message:"")));
   app.append(card);
-  renderBar([el("button",{class:"btn ghost sm",onclick:()=>{SUPPRESS_HASH=true;location.hash="";go("home");}},"ホーム"),el("div",{style:"flex:1"}),el("button",{class:"btn primary",onclick:diagRun},"もう一度調べる")]);
+  renderBar([el("button",{class:"btn ghost sm",onclick:()=>go("owner")},"管理画面へ"),el("div",{style:"flex:1"}),el("button",{class:"btn primary",onclick:diagRun},"もう一度調べる")]);
 }
 function render(){const app=$("#app");app.innerHTML="";$("#bar").innerHTML="";if(SCREEN==="home")viewHome(app);else if(SCREEN==="create")viewCreate(app);else if(SCREEN==="share")viewShare(app);else if(SCREEN==="respond")viewRespond(app);else if(SCREEN==="result")viewResult(app);else if(SCREEN==="loading")viewLoading(app);else if(SCREEN==="notfound")viewNotFound(app);else if(SCREEN==="owner")viewOwner(app);else if(SCREEN==="diag")viewDiag(app);}
 
