@@ -1529,7 +1529,7 @@ async function sha256hex(s){const b=await crypto.subtle.digest("SHA-256",new Tex
 async function ownerTryUnlock(pass){
   if(!remoteEnabled()){OWNER.err="バックエンド未設定のため利用できません";render();return false;}
   let result;
-  try{result=await rpc("sukima_owner_check",{p_pass:pass||""});}catch(e){OWNER.err="接続に失敗しました";render();return false;}
+  try{result=await rpc("sukima_owner_session",{p_pass:pass||""});}catch(e){OWNER.err="接続に失敗しました";render();return false;}
   if(result==="RATE_LIMITED"){OWNER.err="合言葉を15回間違えたため、この接続元から15分間は再入力できません";render();return false;}
   if(result==="INVALID"){OWNER.err="合言葉が違います";render();return false;}
   if(typeof result==="string"&&/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(result)){
@@ -1687,7 +1687,7 @@ async function diagRun(){
   DIAG={running:true,rows:[],verdict:""};render();
   const rows=[];
   rows.push(await diagProbe("① 調整を読む窓口 (sukima_get_event)","/rest/v1/rpc/sukima_get_event",{p_id:"zzzzzzzzzzzz"},s=>s===200));
-  rows.push(await diagProbe("② 認可チェックの窓口 (sukima_owner_check)","/rest/v1/rpc/sukima_owner_check",{p_pass:"__diag__"},s=>s===200));
+  rows.push(await diagProbe("② 認可チェックの窓口 (sukima_owner_session)","/rest/v1/rpc/sukima_owner_session",{p_pass:"__diag__"},s=>s===200));
   /* 作成の窓口は「わざと不正な引数」で叩く。関数があれば入力チェックで400、無ければ404。
      どちらでも書き込みは発生しないので、診断で調整が増えることはない。 */
   rows.push(await diagProbe("③ 調整を作る窓口 (sukima_create_event)","/rest/v1/rpc/sukima_create_event",{p_id:"!",p_data:{},p_admin_key:"x"},s=>s===400));
