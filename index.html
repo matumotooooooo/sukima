@@ -144,22 +144,52 @@
   .dlbanner b{font-size:19px}
   .dlbanner .cap{font-size:12px;font-weight:700;color:var(--muted);display:block}
   .dlbanner.none{background:var(--surface-2);border-color:var(--line-strong);color:var(--muted);font-weight:700}
+  .card.decided{border:2px solid var(--ok);background:linear-gradient(135deg,color-mix(in srgb,var(--ok) 12%,transparent),transparent)}
+  .decdate{font-size:22px;font-weight:800;margin:6px 0 0;letter-spacing:.01em}
+  .inapp{margin-top:12px;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--amber) 14%,transparent);border:1px solid var(--amber);font-size:12.5px;color:var(--ink)}
+  /* マイ履歴 */
+  .histrow{display:flex;gap:8px;align-items:stretch}
+  .histopen{flex:1;text-align:left;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:11px;padding:10px 12px;cursor:pointer;color:var(--ink);display:block}
+  .histopen:hover{border-color:var(--accent)}
+  .histtitle{display:block;font-weight:800;font-size:14px}
+  .histmeta{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+  .histx{padding:0 12px}
+  .adminlink{background:var(--surface-2);border:1px dashed var(--line-strong);border-radius:12px;padding:12px;margin-top:4px}
+  .lockinfo{margin-top:12px;padding:10px 12px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line-strong);font-size:12.5px;color:var(--muted);line-height:1.7}
+  /* オーナー画面 */
+  .ownercard{padding:16px}
+  .tag{font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line-strong);color:var(--muted);white-space:nowrap}
+  .tag.ok{background:color-mix(in srgb,var(--ok) 15%,transparent);border-color:var(--ok);color:var(--ok)}
 
   .linkbox{display:block;margin-top:6px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:12px;padding:12px;word-break:break-all;font-size:12.5px;color:var(--accent);text-decoration:none}
 
   /* Matrix */
   .matrix-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
-  .matrix-wrap.scrolly{max-height:min(58vh,540px);overflow:auto}
   .bulkrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:4px 0 2px}
+  /* 入力があるときだけ「クリア」を目立たせる（誤入力にすぐ気づけるように） */
+  .clearbtn.armed{color:#fff;background:var(--no);border-color:var(--no);box-shadow:0 0 0 0 color-mix(in srgb,var(--no) 60%,transparent);animation:clearpulse 1.6s ease-out infinite}
+  .clearbtn.armed:hover{color:#fff;border-color:var(--no)}
+  @keyframes clearpulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--no) 55%,transparent)}70%{box-shadow:0 0 0 9px transparent}100%{box-shadow:0 0 0 0 transparent}}
+  @media (prefers-reduced-motion:reduce){.clearbtn.armed{animation:none}}
   table.mx th.taph{cursor:pointer}
   table.mx th.taph:hover{color:var(--accent);background:var(--accent-soft)}
-  table.mx{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%}
+  table.mx{border-collapse:separate;border-spacing:0;width:max-content}
+  /* スクロールで見出しが上端に来たとき“ふわっと”固定される浮動ヘッダー */
+  .float-head{position:fixed;top:0;z-index:30;overflow:hidden;background:var(--surface-2);border-bottom:1px solid var(--line-strong);box-shadow:0 4px 10px rgba(20,22,35,.06);pointer-events:none;opacity:0;transition:opacity .16s ease;display:none;border-radius:0 0 6px 6px}
+  .float-head.show{display:block;opacity:1}
+  .float-head.tappable{pointer-events:auto}
+  .float-head table.mx{margin:0}
+  .float-head thead th{position:sticky;top:0;background:var(--surface-2)}
+  .float-head thead th:first-child{position:sticky;left:0;z-index:2}
   table.mx th,table.mx td{border-bottom:1px solid var(--line);border-right:1px solid var(--line)}
   table.mx thead th{position:sticky;top:0;z-index:3;background:var(--surface-2);font-size:12px;color:var(--muted);font-weight:700;padding:8px 6px;white-space:nowrap;min-width:60px}
   table.mx thead th small{display:block;color:var(--faint);font-weight:600;font-size:10px}
   table.mx tbody th{position:sticky;left:0;z-index:2;background:var(--surface-2);font-size:12px;color:var(--muted);font-weight:700;padding:8px 10px;white-space:nowrap;text-align:right;min-width:52px}
   table.mx thead th:first-child{position:sticky;left:0;z-index:4}
-  .cell{width:60px;height:48px;text-align:center;cursor:pointer;user-select:none;font-weight:800;font-size:17px;position:relative}
+  .cell{width:var(--cellw,60px);height:48px;text-align:center;cursor:pointer;user-select:none;font-weight:800;font-size:17px;position:relative}
+  /* 中身のない見出し（「終日」だけ等）は場所を取らせない */
+  table.mx th.blank{min-width:0;padding:6px 2px}
+  table.mx tbody th small{color:var(--faint);font-weight:600;font-size:10px;margin-left:3px}
   .cell.paint{touch-action:none}
   .gridbox{position:relative}
   .gridhint{font-size:12px;color:var(--muted);margin-top:8px;text-align:center}
@@ -171,6 +201,11 @@
   .cell.v0{color:var(--faint)}
   .cell.v1{color:var(--maybe);background:color-mix(in srgb,var(--maybe) 12%,transparent)}
   .cell.v2{color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,transparent)}
+  .cell.picked{box-shadow:inset 0 0 0 3px var(--ok)}
+  .cell.picked::before{content:"✓";position:absolute;top:1px;right:3px;font-size:10px;font-weight:800;color:var(--ok)}
+  .cell.hit{box-shadow:inset 0 0 0 3px var(--accent)}
+  .cell.hit.best{box-shadow:inset 0 0 0 3px var(--amber),inset 0 0 0 6px color-mix(in srgb,var(--accent) 55%,transparent)}
+  .cell.dim{opacity:.34}
   .cell.best{box-shadow:inset 0 0 0 3px var(--amber)}
   .cell.best::after{content:"イチオシ";position:absolute;top:-1px;left:0;right:0;font-size:8.5px;letter-spacing:.06em;color:#fff;background:var(--amber);font-weight:800;line-height:1.5}
   .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:12px}
@@ -229,7 +264,7 @@
 <body>
 <header class="app">
   <div class="head-in">
-    <div class="logo" onclick="go('home')" role="button" tabindex="0">
+    <div class="logo" role="button" tabindex="0">
       <div class="mark"></div>
       <div class="name">スキマ<small>SUKIMA</small></div>
     </div>
@@ -252,7 +287,8 @@ const el = (t,a={},...kids)=>{const e=document.createElement(t);for(const k in a
 const esc = s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function b64u(s){return btoa(unescape(encodeURIComponent(s))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");}
 function ub64u(s){s=s.replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";return decodeURIComponent(escape(atob(s)));}
-const rid = ()=>Math.random().toString(36).slice(2,8);
+/* 暗号学的乱数によるID生成（Math.randomは推測可能なため使わない） */
+function rid(n=6){const a="abcdefghijklmnopqrstuvwxyz0123456789";let s="";const b=new Uint8Array(n*2);while(s.length<n){crypto.getRandomValues(b);for(const v of b){if(s.length>=n)break;if(v<252)s+=a[v%36];}}return s;}
 const pad = n=>String(n).padStart(2,"0");
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove("show"),1900);}
 async function copy(text){try{await navigator.clipboard.writeText(text);return true;}catch(e){const ta=el("textarea",{});ta.value=text;document.body.append(ta);ta.select();try{document.execCommand("copy");}catch(_){}ta.remove();return true;}}
@@ -262,11 +298,19 @@ const isoLocal = d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())
 function fmtDate(iso){const d=new Date(iso+"T00:00:00");return (d.getMonth()+1)+"/"+d.getDate()+"("+WD[(d.getDay()+6)%7]+")";}
 
 /* ---------- event pack/unpack (compact URL) ---------- */
-function packEvent(ev){return {v:2,i:ev.id,t:ev.title,n:ev.note||"",D:ev.cols.map(c=>c.date),S:ev.rows.map(r=>[r.label,r.h,r.m||0]),d:ev.deadline||""};}
+/* dc は「確定した枠の配列」。旧バージョンは単一オブジェクトだったので、読み込み時に配列へ正規化する */
+function normDecs(dc){
+  if(!dc)return [];
+  const a=Array.isArray(dc)?dc:[dc];
+  return a.filter(d=>d&&d.d&&d.s!=null&&d.e!=null&&Number(d.e)>Number(d.s))
+          .map(d=>({d:d.d,s:Number(d.s),e:Number(d.e)}))
+          .sort((x,y)=>x.d===y.d?x.s-y.s:(x.d<y.d?-1:1));
+}
+function packEvent(ev){const ds=normDecs(ev.decisions);return {v:2,i:ev.id,t:ev.title,n:ev.note||"",D:ev.cols.map(c=>c.date),S:ev.rows.map(r=>[r.label,r.h,r.m||0]),d:ev.deadline||"",dc:ds.length?ds:null,ac:ev.allowConfirm?1:0,ak:ev.adminHash||""};}
 function unpackEvent(p){
   const cols=(p.D||[]).map(iso=>{const dt=new Date(iso+"T00:00:00");return {label:(dt.getMonth()+1)+"/"+dt.getDate(),sub:WD[(dt.getDay()+6)%7],date:iso};});
   const rows=(p.S||[]).map(s=>({label:s[0],h:s[1],m:s[2]||0}));
-  return {v:2,id:p.i||rid(),title:p.t||"",note:p.n||"",mode:"date",cols,rows,deadline:p.d||"",createdAt:0};
+  return {v:2,id:p.i||rid(),title:p.t||"",note:p.n||"",mode:"date",cols,rows,deadline:p.d||"",decisions:normDecs(p.dc),allowConfirm:!!p.ac,adminHash:p.ak||"",createdAt:0};
 }
 const encEvent = ev=>b64u(JSON.stringify(packEvent(ev)));
 const decEvent = s=>unpackEvent(JSON.parse(ub64u(s)));
@@ -279,16 +323,54 @@ const decAns = s=>JSON.parse(ub64u(s));
    ※ 必ず「anon public」キーを使う。「service_role」キーは絶対に貼らないこと。 */
 const SUPABASE_URL = "https://xujfvxqbcqdmhmvberdi.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1amZ2eHFiY3FkbWhtdmJlcmRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxNjY0NDAsImV4cCI6MjA5OTc0MjQ0MH0.MMTNGnO5crPL_WwoW01hKYOwHktIzq-eeIkirIh3cI8";
+/* このファイルに秘密情報は一切含まれない（anonキーは公開前提の識別子）。
+   認可判定・オーナー合言葉の照合はすべてサーバー側（supabase-secure.sql の
+   RPC関数）で行う。テーブルへの直接アクセスは遮断済み。 */
 /* ============================================================== */
 const remoteEnabled = ()=>!!(SUPABASE_URL && SUPABASE_ANON_KEY);
 function sbHeaders(extra){return Object.assign({apikey:SUPABASE_ANON_KEY,Authorization:"Bearer "+SUPABASE_ANON_KEY,"Content-Type":"application/json"},extra||{});}
 function sbBase(){return SUPABASE_URL.trim().replace(/\/+$/,"").replace(/\/rest\/v1$/,"");}
-async function sbFetch(path,opts){const r=await fetch(sbBase()+"/rest/v1/"+path,opts);if(!r.ok)throw new Error("supabase "+r.status);return r;}
-async function remoteSaveEvent(ev){await sbFetch("events",{method:"POST",headers:sbHeaders({Prefer:"resolution=merge-duplicates,return=minimal"}),body:JSON.stringify({id:ev.id,data:packEvent(ev)})});}
-async function remoteLoadEvent(id){const r=await sbFetch("events?select=data&id=eq."+encodeURIComponent(id),{headers:sbHeaders()});const rows=await r.json();return rows.length?unpackEvent(rows[0].data):null;}
-async function remoteUpsertAnswer(eventId,name,cells,comment){await sbFetch("answers",{method:"POST",headers:sbHeaders({Prefer:"resolution=merge-duplicates,return=minimal"}),body:JSON.stringify({event_id:eventId,name,cells,comment})});}
-async function remoteDeleteAnswer(eventId,name){await sbFetch("answers?event_id=eq."+encodeURIComponent(eventId)+"&name=eq."+encodeURIComponent(name),{method:"DELETE",headers:sbHeaders({Prefer:"return=minimal"})});}
-async function remoteLoadAnswers(eventId){const r=await sbFetch("answers?select=name,cells,comment&event_id=eq."+encodeURIComponent(eventId),{headers:sbHeaders()});const rows=await r.json();const out={};rows.forEach(x=>out[x.name]={cells:x.cells||{},comment:x.comment||""});return out;}
+/* このファイルのビルド識別子。デプロイが反映されたかを画面で確認できるようにする
+   （キャッシュに残った旧版と新版を、見た目でなく事実で切り分けるため） */
+const BUILD="v7 (2026-11-08)";
+/* 直近の通信エラー（診断画面で原因を特定するために保持。秘密情報は入らない） */
+let LAST_ERR=null;
+/* すべての通信は認可チェック内蔵のRPC経由（テーブル直アクセスは行わない） */
+async function rpc(fn,args){
+  let r;
+  try{ r=await fetch(sbBase()+"/rest/v1/rpc/"+fn,{method:"POST",headers:sbHeaders(),body:JSON.stringify(args||{})}); }
+  catch(netErr){ LAST_ERR={fn,status:0,code:"network",message:"サーバーに接続できませんでした（通信環境かURL設定）"}; throw Object.assign(new Error("rpc "+fn+" network"),LAST_ERR); }
+  const t=await r.text();
+  if(!r.ok){
+    let body={};try{body=t?JSON.parse(t):{};}catch(e){body={message:(t||"").slice(0,200)};}
+    LAST_ERR={fn,status:r.status,code:body.code||"",message:body.message||"",hint:body.hint||""};
+    throw Object.assign(new Error("rpc "+fn+" "+r.status),LAST_ERR);
+  }
+  return t?JSON.parse(t):null;
+}
+/* サーバーの生エラーを、原因が分かる日本語に翻訳する */
+function rpcReason(e){
+  if(!e)return "原因不明のエラーです";
+  if(e.status===0)return "サーバーに接続できません（通信環境かURL設定を確認）";
+  if(e.status===404||e.code==="PGRST202")return "サーバー側のSQLが未適用か、APIのキャッシュが古い状態です";
+  if(e.status===401||e.status===403)return "サーバーに拒否されました（キーまたは権限の設定）";
+  if(e.message)return "サーバーの応答: "+e.message;
+  return "エラー "+e.status;
+}
+async function remoteCreateEvent(ev,adminKey){await rpc("sukima_create_event",{p_id:ev.id,p_data:packEvent(ev),p_admin_key:adminKey});}
+async function remoteLoadEvent(id){const d=await rpc("sukima_get_event",{p_id:id});return d?unpackEvent(d):null;}
+async function remoteUpsertAnswer(eventId,name,cells,comment){await rpc("sukima_upsert_answer",{p_event_id:eventId,p_name:name,p_cells:cells,p_comment:comment||""});}
+async function remoteDeleteAnswer(eventId,name){await rpc("sukima_delete_answer",{p_event_id:eventId,p_name:name,p_admin_key:myAdminSecret(eventId)||null,p_owner_pass:ownerToken()||null});}
+async function remoteLoadAnswers(eventId){const rows=await rpc("sukima_get_answers",{p_event_id:eventId})||[];const out={};rows.forEach(x=>out[x.name]={cells:x.cells||{},comment:x.comment||""});return out;}
+async function remoteSetDecision(id,dec){await rpc("sukima_set_decision",{p_id:id,p_dec:dec,p_admin_key:myAdminSecret(id)||null,p_owner_pass:ownerToken()||null});}
+async function remoteSetAllow(id,allow){await rpc("sukima_set_allow",{p_id:id,p_allow:!!allow,p_admin_key:myAdminSecret(id)||null,p_owner_pass:ownerToken()||null});}
+/* ---- オーナー画面用（合言葉の照合後に発行された短期トークンで一覧・明細・削除） ---- */
+async function remoteListEvents(){return await rpc("sukima_owner_list",{p_pass:ownerToken()})||[];}
+async function remoteAllAnswerMeta(){return await rpc("sukima_owner_answer_meta",{p_pass:ownerToken()})||[];}
+async function remoteEventAnswers(eventId){return await rpc("sukima_owner_event_answers",{p_pass:ownerToken(),p_event_id:eventId})||[];}
+async function remoteDeleteEvent(id){await rpc("sukima_owner_delete_event",{p_pass:ownerToken(),p_id:id});}
+async function remoteEventLog(eventId){try{return await rpc("sukima_owner_log",{p_pass:ownerToken(),p_event_id:eventId});}catch(e){return null;}}
+/* 操作ログはDBの実データ変更トリガーで記録する（ブラウザーから任意投稿しない）。 */
 
 /* ---------- unified data layer (in-memory ANS) ---------- */
 let ANS={};
@@ -297,10 +379,66 @@ async function fetchAnswers(){if(!EV)return ANS={};if(remoteEnabled()){try{ANS=a
 async function putAnswer(name,cells,comment){if(remoteEnabled()){await remoteUpsertAnswer(EV.id,name,cells,comment);}else{const s=loadAnswers(EV.id);s[name]={cells,comment,ts:Date.now()};saveAnswers(EV.id,s);}ANS[name]={cells,comment};}
 async function delAnswer(name){if(remoteEnabled()){await remoteDeleteAnswer(EV.id,name);}else{const s=loadAnswers(EV.id);delete s[name];saveAnswers(EV.id,s);}delete ANS[name];}
 
-/* ---------- 作成者（管理者）判定：作成した端末にだけ印を付ける ---------- */
+/* ---------- マイ履歴：この端末で作成／回答した調整（他人には見えない） ---------- */
+const HIST_KEY="sukima:history";
+function loadHistory(){try{const a=JSON.parse(localStorage.getItem(HIST_KEY)||"[]");return Array.isArray(a)?a:[];}catch(e){return[];}}
+function saveHistory(a){try{localStorage.setItem(HIST_KEY,JSON.stringify(a.slice(0,60)));}catch(e){}}
+function touchHistory(p){
+  if(!p||!p.id)return;
+  const a=loadHistory(),i=a.findIndex(x=>x.id===p.id),now=Date.now();
+  const prev=i>=0?a[i]:null;if(i>=0)a.splice(i,1);
+  a.unshift({id:p.id,title:p.title||(prev&&prev.title)||"",h:p.h||(prev&&prev.h)||"",role:(prev&&prev.role==="creator")?"creator":(p.role||(prev&&prev.role)||"respondent"),ts:now});
+  saveHistory(a);
+}
+function removeHistory(id){saveHistory(loadHistory().filter(x=>x.id!==id));}
+function currentHash(){return location.hash.replace(/^#/,"");}
+/* 履歴機能より前に作った調整を、端末に残る印から復元して一覧に載せる（初回のみ） */
+let BACKFILLED=false;
+async function backfillHistory(){
+  if(BACKFILLED)return;BACKFILLED=true;
+  const known=new Set(loadHistory().map(x=>x.id));const found=[];
+  try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i)||"";
+    let m=k.match(/^sukima:admin:(.+)$/);if(m){found.push({id:m[1],role:"creator"});continue;}
+    m=k.match(/^sukima:ans:(.+)$/);if(m)found.push({id:m[1],role:"respondent"});
+  }}catch(e){return;}
+  const add=found.filter(f=>!known.has(f.id));
+  if(!add.length)return;
+  for(const f of add){
+    let title="";
+    if(remoteEnabled()){try{const ev=await remoteLoadEvent(f.id);if(!ev)continue;title=ev.title;}catch(e){continue;}}
+    touchHistory({id:f.id,title:title,h:remoteEnabled()?"id="+f.id:"",role:f.role});
+  }
+  if(SCREEN==="home")render();
+}
+
+/* ---------- 作成者（管理者）判定 ----------
+   1) 作成した端末には印を付ける
+   2) 管理者リンク（#id=..&k=…）を開いた端末でも、合鍵が一致すれば管理者になる
+      （LINEのアプリ内ブラウザは保存領域が別なので、端末をまたぐ手段が必要）
+   3) オーナー解錠済みなら常に管理者                                        */
 const adminKey = id=>"sukima:admin:"+id;
+const adminSecretKey = id=>"sukima:ak:"+id;
 function markAdmin(id){try{localStorage.setItem(adminKey(id),"1");}catch(e){}}
-function isAdmin(){return !!(EV&&localStorage.getItem(adminKey(EV.id))==="1");}
+function isAdmin(){return !!(EV&&(localStorage.getItem(adminKey(EV.id))==="1"||ownerUnlocked()));}
+function myAdminSecret(id){try{return localStorage.getItem(adminSecretKey(id))||"";}catch(e){return "";}}
+/* この端末で調整を作ったことがあるか（＝運営側の画面を出してよい端末か） */
+function hasEverCreated(){
+  try{
+    if(ownerUnlocked())return true;
+    for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf("sukima:admin:")===0&&localStorage.getItem(k)==="1")return true;}
+  }catch(e){}
+  return false;
+}
+async function claimAdminFromKey(k){
+  if(!k||!EV)return false;
+  try{
+    let ok=false;
+    if(remoteEnabled())ok=await rpc("sukima_check_admin",{p_id:EV.id,p_key:k})===true;  // 照合はサーバー側
+    else ok=!!EV.adminHash&&await sha256hex(k)===EV.adminHash;                            // オフライン版のみ端末内で照合
+    if(ok){markAdmin(EV.id);try{localStorage.setItem(adminSecretKey(EV.id),k);}catch(e){}return true;}
+  }catch(e){}
+  return false;
+}
 
 /* ---------- theme ---------- */
 const THEME_KEY="sukima:theme";
@@ -310,6 +448,19 @@ $("#themeBtn").addEventListener("click",()=>{const cur=document.documentElement.
 
 /* ---------- storage ---------- */
 const nameKey="sukima:name";
+/* 名前は「調整ごと」にも覚える。端末に1個だけだと、別の調整に違う表記で回答したときに
+   前の調整で自分の回答を見失う。グローバル側は新しい調整の初期値として残す。 */
+const nameKeyFor = id=>"sukima:name:"+id;
+function myNameFor(id){try{return (localStorage.getItem(nameKeyFor(id))||localStorage.getItem(nameKey)||"").trim();}catch(e){return "";}}
+function rememberName(id,nm){try{localStorage.setItem(nameKeyFor(id),nm);localStorage.setItem(nameKey,nm);}catch(e){}}
+/* サーバーにある回答の中から「自分のもの」を探す。見つかればその登録名を返す。
+   端末のメモが消えていると手がかりが無いので空を返す（＝回答画面で名前から復旧してもらう）。 */
+function resolveMyAnswer(store,id){
+  const s=store||{},want=myNameFor(id);
+  if(!want)return "";
+  if(s[want])return want;
+  return Object.keys(s).find(n=>n.trim()===want)||"";
+}
 const ansKey = id=>"sukima:ans:"+id;
 function loadAnswers(id){try{return JSON.parse(localStorage.getItem(ansKey(id))||"{}");}catch(e){return{};}}
 function saveAnswers(id,obj){localStorage.setItem(ansKey(id),JSON.stringify(obj));}
@@ -319,19 +470,52 @@ let EV=null, SCREEN="home", SUPPRESS_HASH=false;
 function cols(ev){return ev.cols;}
 function rows(ev){return ev.rows;}
 function shareURL(){const base=location.href.split("#")[0];return remoteEnabled()?base+"#id="+EV.id:base+"#e="+encEvent(EV);}
-function go(screen){stopPoll();if(PROXY&&screen!=="respond")endProxy();SCREEN=screen;render();window.scrollTo(0,0);}
-async function nav(screen){stopPoll();if(PROXY&&screen!=="respond")endProxy();FILTER.clear();SCREEN=screen;render();window.scrollTo(0,0);try{await fetchAnswers();}catch(e){}if(SCREEN===screen){render();if(screen==="result")startPoll();}}
+/* 自分用（管理者）リンク：別の端末やLINEでも作成者として操作できる。人には送らない */
+function adminURL(){const s=myAdminSecret(EV.id);return s?shareURL()+"&k="+encodeURIComponent(s):"";}
+/* いま見ている画面をURLに残す。ページを更新しても同じ画面に戻ってこられるようにするため。
+   （調整に紐づく画面だけが対象。ホーム等はURLを持たない） */
+function syncHashScreen(){
+  if(!EV)return;
+  const h=location.hash.replace(/^#/,"");
+  if(!/[#&]?(id|e)=/.test(h))return;
+  /* respond も明示的に書く。そうしないと「回答済みなら集計から開く」既定と衝突して、
+     回答画面で更新したのに集計へ飛ばされてしまう（URLに書いてあるほうを常に優先する） */
+  const want=(SCREEN==="result"||SCREEN==="share")?SCREEN:"respond";
+  const next=h.replace(/&v=[a-z]+/,"")+"&v="+want;
+  if(next!==h){SUPPRESS_HASH=true;location.hash=next;}
+  touchHistory({id:EV.id,title:EV.title,h:currentHash()});
+}
+function go(screen){stopPoll();if(PROXY&&screen!=="respond")endProxy();if(screen!=="result")pickReset();MY_DIRTY=false;SCREEN=screen;render();syncHashScreen();window.scrollTo(0,0);}
+async function nav(screen){stopPoll();if(PROXY&&screen!=="respond")endProxy();if(screen!=="result")pickReset();FILTER.clear();MY_DIRTY=false;SCREEN=screen;render();syncHashScreen();window.scrollTo(0,0);try{await fetchAnswers();}catch(e){}if(SCREEN===screen){render();if(screen==="result")startPoll();}}
 let POLL=null;
-function startPoll(){stopPoll();if(!remoteEnabled())return;POLL=setInterval(async()=>{if(SCREEN!=="result"){stopPoll();return;}const before=JSON.stringify(ANS);await fetchAnswers();if(SCREEN==="result"&&JSON.stringify(ANS)!==before){const y=window.scrollY;render();window.scrollTo(0,y);}},6000);}
+function startPoll(){stopPoll();if(!remoteEnabled())return;POLL=setInterval(async()=>{if(SCREEN!=="result"){stopPoll();return;}if(PICK.on)return;const before=JSON.stringify(ANS);await fetchAnswers();if(SCREEN==="result"&&JSON.stringify(ANS)!==before){const y=window.scrollY;render();window.scrollTo(0,y);}},6000);}
 function stopPoll(){if(POLL){clearInterval(POLL);POLL=null;}}
 async function boot(){
   const h=location.hash;const mId=h.match(/[#&]id=([^&]+)/);const mE=h.match(/[#&]e=([^&]+)/);
+  if(/[#&]diag\b/.test(h)){SCREEN="diag";render();diagRun();return;}
+  if(/[#&]owner\b/.test(h)){SCREEN="owner";render();ownerLoad();return;}
+  const mV=h.match(/[#&]v=([a-z]+)/);
   if(mId){
     if(remoteEnabled()){SCREEN="loading";render();try{EV=await remoteLoadEvent(mId[1]);}catch(e){EV=null;}if(EV){await fetchAnswers();SCREEN="respond";}else SCREEN="notfound";}
     else SCREEN="notfound";
   }else if(mE){try{EV=decEvent(mE[1]);if(EV&&EV.cols&&EV.cols.length){await fetchAnswers();SCREEN="respond";}else SCREEN="home";}catch(e){SCREEN="home";}}
   else SCREEN="home";
+  const mK=h.match(/[#&]k=([^&]+)/);
+  if(mK&&EV)await claimAdminFromKey(decodeURIComponent(mK[1]));
+  if(EV&&SCREEN==="respond"){
+    /* URLに画面が書いてあればそれを復元。書いていなくても、この端末で回答済みなら
+       集計結果から始める（毎回また入力画面に戻される手間をなくす） */
+    if(mV&&(mV[1]==="result"||mV[1]==="share"))SCREEN=mV[1];
+    else if(mV&&mV[1]==="respond"){/* URLの指定を尊重してそのまま回答画面 */}
+    else if(alreadyAnswered())SCREEN="result";
+  }
+  if(EV&&SCREEN!=="notfound")touchHistory({id:EV.id,title:EV.title,h:currentHash()});
   render();
+  if(SCREEN==="result")startPoll();
+}
+/* この端末の回答がすでにこの調整に入っているか */
+function alreadyAnswered(){
+  return !!(EV&&resolveMyAnswer(ANS,EV.id));
 }
 window.addEventListener("hashchange",()=>{if(SUPPRESS_HASH){SUPPRESS_HASH=false;return;}boot();});
 
@@ -365,6 +549,55 @@ function viewHome(app){
       ])
     )
   );
+  const hist=historyCard();if(hist)app.insertBefore(hist,app.children[1]||null);
+  backfillHistory();
+  /* 接続診断は運営側のための道具。回答するだけの人には出さない
+     （内部のしくみを匂わせないため）。この端末で調整を作ったことがある人にだけ表示する。
+     どの端末からでも #diag で開ける。 */
+  if(hasEverCreated())app.append(el("div",{class:"subtle",style:"text-align:center;margin:14px 0 4px;font-size:12px"},
+    el("button",{class:"btn ghost sm",style:"font-size:12px;padding:6px 12px",onclick:()=>{go("diag");diagRun();}},"接続を診断する（ビルド "+BUILD+"）")));
+}
+/* オーナー画面への入口は画面に出さない。ロゴを「5秒」長押しでのみ開く
+   （連打やコピー目的の短い長押しでは開かないように） */
+(function(){
+  const logo=document.querySelector("header.app .logo");if(!logo)return;
+  let timer=null,fired=false;
+  const open=()=>{fired=true;SUPPRESS_HASH=true;location.hash="owner";go("owner");ownerLoad();};
+  logo.addEventListener("pointerdown",()=>{fired=false;clearTimeout(timer);timer=setTimeout(open,5000);});
+  ["pointerup","pointerleave","pointercancel"].forEach(ev=>logo.addEventListener(ev,()=>clearTimeout(timer)));
+  logo.addEventListener("click",e=>{if(fired){fired=false;e.preventDefault();e.stopImmediatePropagation();return;}go("home");});
+})();
+/* この端末で作成／回答した調整の履歴（他の人には見えない） */
+function historyCard(){
+  const h=loadHistory();if(!h.length)return null;
+  const card=el("section",{class:"card"});
+  card.append(el("div",{class:"eyebrow"},"マイ調整"),el("h2",{style:"font-size:16px;margin:6px 0 2px"},"最近つくった／回答した調整"),el("p",{class:"subtle",style:"margin:0 0 10px"},"この端末の履歴です。タップで開けます。"));
+  const list=el("div",{style:"display:grid;gap:8px"});
+  h.slice(0,12).forEach(it=>{
+    const row=el("div",{class:"histrow"});
+    row.append(el("button",{class:"histopen",onclick:()=>openFromHistory(it)},
+      el("span",{class:"histtitle"},it.title||"(無題)"),
+      el("span",{class:"histmeta"},(it.role==="creator"?"つくった":"回答した")+" ・ "+fmtAgo(it.ts))
+    ));
+    row.append(el("button",{class:"btn ghost sm histx","aria-label":"この一覧から隠す",title:"この一覧から隠す（調整は消えません）",onclick:()=>confirmHideHistory(it)},"✕"));
+    list.append(row);
+  });
+  card.append(list);
+  return card;
+}
+function confirmHideHistory(it){
+  openPop(el("div",{},
+    el("h3",{},"この一覧から隠しますか？"),
+    el("p",{class:"subtle",style:"margin:8px 0 0"},"「"+esc(it.title||"(無題)")+"」をこの一覧から消すだけです。調整そのものや、みんなの回答は消えません（リンクを開けばこれまで通り使えます）。"),
+    el("div",{class:"row",style:"margin-top:14px"},
+      el("button",{class:"btn ghost sm",onclick:()=>{removeHistory(it.id);document.querySelectorAll(".pop-back").forEach(x=>x.remove());toast("一覧から隠しました");render();}},"一覧から隠す")
+    )
+  ));
+}
+function fmtAgo(ts){if(!ts)return "";const d=Math.floor((Date.now()-ts)/86400000);if(d<=0)return "今日";if(d===1)return "昨日";if(d<7)return d+"日前";const dt=new Date(ts);return (dt.getMonth()+1)+"/"+dt.getDate();}
+function openFromHistory(it){
+  if(it.h){SUPPRESS_HASH=true;location.hash=it.h;boot();return;}
+  if(remoteEnabled()){SUPPRESS_HASH=true;location.hash="id="+it.id;boot();}
 }
 function step(n,t,p){return el("div",{class:"step"},el("div",{class:"n"},n),el("h3",{},t),el("p",{},p));}
 function ul(items){const box=el("div",{style:"display:grid;gap:10px"});for(const [t,p] of items)box.append(el("div",{class:"row tight",style:"align-items:flex-start;flex-wrap:nowrap"},el("div",{style:"color:var(--accent);font-weight:800;margin-top:1px"},"◆"),el("div",{},el("div",{style:"font-weight:800;font-size:14px"},t),el("div",{class:"subtle"},p))));return box;}
@@ -388,7 +621,7 @@ function viewCreate(app){
   quick.append(
     el("button",{class:"chip mini",type:"button",onclick:()=>{selectWeekdays([0,6]);}},"週末をまとめて"),
     el("button",{class:"chip mini",type:"button",onclick:()=>{selectWeekdays([1,2,3,4,5]);}},"平日をまとめて"),
-    el("button",{class:"chip mini",type:"button",onclick:()=>{CRE.dates.clear();refreshCal();}},"クリア")
+    el("button",{class:"chip mini clearbtn",id:"calClear",type:"button",onclick:()=>{CRE.dates.clear();refreshCal();}},"クリア")
   );
   calBlock.append(quick);
   const calHost=el("div",{id:"calHost"});
@@ -480,7 +713,7 @@ function enableCalPaint(host){
   host.addEventListener("pointercancel",reset);
 }
 function toggleWeekday(gd){const days=calDays().filter(d=>!d.past&&new Date(d.iso+"T00:00:00").getDay()===gd);const allSel=days.length&&days.every(d=>CRE.dates.has(d.iso));days.forEach(d=>{if(allSel)CRE.dates.delete(d.iso);else CRE.dates.add(d.iso);});if(window.__refreshCal)window.__refreshCal();}
-function updateSelInfo(){const info=$("#selInfo");if(info){const n=CRE.dates.size;info.innerHTML=n?" 現在 <span class='selcount'>"+n+"日</span> 選択中":"";}}
+function updateSelInfo(){const info=$("#selInfo");if(info){const n=CRE.dates.size;info.innerHTML=n?" 現在 <span class='selcount'>"+n+"日</span> 選択中":"";}const cb=$("#calClear");if(cb)cb.classList.toggle("armed",CRE.dates.size>0);}
 
 function field(label,opt,control){const l=el("label",{class:"fld"});l.append(el("span",{class:"lbl"},label,opt?el("span",{class:"opt"},opt):null),control);return l;}
 function input(type,val,ph,on){return el("input",{type,value:val||"",placeholder:ph||"",oninput:e=>on(e.target.value)});}
@@ -500,10 +733,12 @@ async function createEvent(){
   if(rs.length>16){toast("時間帯が多すぎます。刻みを大きくしてください");return;}
   const ds=[...CRE.dates].sort();
   const colsA=ds.map(iso=>{const dt=new Date(iso+"T00:00:00");return {label:(dt.getMonth()+1)+"/"+dt.getDate(),sub:WD[(dt.getDay()+6)%7],date:iso};});
-  EV={v:2,id:rid(),title:CRE.title.trim(),note:CRE.note.trim(),mode:"date",cols:colsA,rows:rs,deadline:CRE.deadline||"",createdAt:Date.now()};
-  ANS={};markAdmin(EV.id);
-  if(remoteEnabled()){try{await remoteSaveEvent(EV);}catch(e){toast("作成に失敗しました。バックエンド設定を確認してください");return;}SUPPRESS_HASH=true;location.hash="id="+EV.id;}
+  EV={v:2,id:rid(12),title:CRE.title.trim(),note:CRE.note.trim(),mode:"date",cols:colsA,rows:rs,deadline:CRE.deadline||"",createdAt:Date.now()};
+  const ak=rid(24);EV.adminHash=await sha256hex(ak);   // 合鍵の平文は端末内のみ。サーバーへはハッシュだけ
+  ANS={};markAdmin(EV.id);try{localStorage.setItem(adminSecretKey(EV.id),ak);}catch(e){}
+  if(remoteEnabled()){try{await remoteCreateEvent(EV,ak);}catch(e){toast("作成できません。"+rpcReason(e));go("diag");diagRun();return;}SUPPRESS_HASH=true;location.hash="id="+EV.id;}
   else{SUPPRESS_HASH=true;location.hash="e="+encEvent(EV);}
+  touchHistory({id:EV.id,title:EV.title,h:currentHash(),role:"creator"});
   go("share");
 }
 
@@ -524,30 +759,75 @@ function viewShare(app){
       el("button",{class:"btn ghost",onclick:async()=>{await copy(url);toast("リンクをコピーしました");}},"リンクをコピー")
     ),
     el("div",{class:"divider"}),
-    el("div",{class:"row"},
+    adminURL()?el("div",{class:"adminlink"},
+      el("div",{style:"font-weight:800;font-size:13px"},"🔑 自分用リンク（管理者）"),
+      el("div",{class:"subtle",style:"margin:2px 0 8px"},"別の端末やLINEでも「作成者メニュー」「日程を確定」を使えるリンクです。自分だけで保管し、みんなには上のリンクを送ってください。"),
+      el("div",{class:"row tight"},
+        el("button",{class:"btn ghost sm",onclick:async()=>{await copy(adminURL());toast("自分用リンクをコピーしました");}},"自分用リンクをコピー"),
+        el("button",{class:"btn ghost sm",onclick:()=>shareLine(adminURL(),"【自分用・管理者リンク】"+EV.title)},"自分に送る(LINE)")
+      )
+    ):null,
+    el("div",{class:"row",style:"margin-top:14px"},
       el("button",{class:"btn primary",onclick:()=>nav("respond")},"自分も回答する →"),
       el("button",{class:"btn ghost",onclick:()=>nav("result")},"回答状況を見る")
     )
   ));
 }
-function shareLine(url,text){const u="https://line.me/R/msg/text/?"+encodeURIComponent(text+"\n"+url);window.open(u,"_blank");}
+/* LINE等のアプリ内ブラウザ判定と、外部ブラウザで開くためのURL
+   （LINEは ?openExternalBrowser=1 付きのリンクを標準ブラウザで開く） */
+function isInAppBrowser(){const ua=navigator.userAgent||"";return /Line\//i.test(ua)||/FBAN|FBAV|Instagram/i.test(ua);}
+function externalURL(u){const [base,hash]=(u||shareURL()).split("#");return base+(base.includes("?")?"&":"?")+"openExternalBrowser=1"+(hash?"#"+hash:"");}
+function openExternally(){location.href=externalURL(location.href);}
+function shareLine(url,text){const u="https://line.me/R/msg/text/?"+encodeURIComponent(text+"\n"+externalURL(url));window.open(u,"_blank");}
 
 /* =========================================================
    RESPOND
 ========================================================= */
-let MY={name:"",cells:{},comment:""};
+let MY={name:"",cells:{},comment:"",eventId:"",loadedFrom:""};
+let MY_DIRTY=false;    // この画面に入ってから編集したか（保存済み回答での上書きを防ぐ）
 let PROXY=null;        // 代理入力中の相手の名前（作成者専用）
 let MY_BACKUP=null;    // 代理入力の間、自分の入力内容を退避
-function startProxy(name){MY_BACKUP={...MY,cells:{...MY.cells}};PROXY=name;MY={name,cells:{...((ANS[name]||{}).cells||{})},comment:(ANS[name]||{}).comment||""};nav("respond");}
+function startProxy(name){MY_BACKUP={...MY,cells:{...MY.cells}};PROXY=name;MY={name,cells:{...((ANS[name]||{}).cells||{})},comment:(ANS[name]||{}).comment||"",eventId:EV?EV.id:"",loadedFrom:name};nav("respond");}
 function endProxy(){if(MY_BACKUP){MY=MY_BACKUP;MY_BACKUP=null;}PROXY=null;}
+/* 保存済みの回答を自分の入力欄に読み込む。どれを読み込んだかを覚えておき、
+   別人の回答を黙って上書きする事故を防ぐ材料にする。 */
+function loadMyAnswerFrom(store,name){
+  const a=(store||{})[name];if(!a)return false;
+  MY.name=name;MY.cells={...(a.cells||{})};MY.comment=a.comment||"";
+  MY.loadedFrom=name;MY.eventId=EV?EV.id:MY.eventId;
+  return true;
+}
 function viewRespond(app){
   const store=ANS;
   if(PROXY){/* 代理入力：MY は startProxy で相手ぶんに差し替え済み */}
-  else{const savedName=localStorage.getItem(nameKey)||"";if(!MY.name)MY.name=savedName;if(MY.name&&store[MY.name]){MY.cells={...store[MY.name].cells};MY.comment=store[MY.name].comment||"";}}
+  // 保存済み回答の読み込みは「画面に入った直後（未編集）」のみ。編集後の再描画で上書きしない
+  else{
+    // 別の調整で塗った内容を持ち越さない（MY は画面をまたいで生き続けるため）
+    if(MY.eventId!==EV.id){MY={name:"",cells:{},comment:"",eventId:EV.id,loadedFrom:""};MY_DIRTY=false;}
+    if(!MY.name)MY.name=myNameFor(EV.id);
+    if(!MY_DIRTY){
+      const typed=(MY.name||"").trim();
+      const mine=resolveMyAnswer(store,EV.id)||(store[typed]?typed:"");
+      if(mine)loadMyAnswerFrom(store,mine);
+    }
+  }
   const overdue=isOverdue();
-  const nameFld = PROXY
-    ? el("div",{class:"fld"},el("span",{class:"lbl"},"代理入力する相手"),el("div",{class:"proxyname"},"👤 "+esc(PROXY)+" さんの代わりに入力中"))
-    : el("label",{class:"fld"},el("span",{class:"lbl"},"あなたの名前"),input("text",MY.name,"例）ひろし",v=>{MY.name=v;}));
+  let nameFld;
+  if(PROXY){
+    nameFld=el("div",{class:"fld"},el("span",{class:"lbl"},"代理入力する相手"),el("div",{class:"proxyname"},"👤 "+esc(PROXY)+" さんの代わりに入力中"));
+  }else{
+    const ni=input("text",MY.name,"例）ひろし",v=>{MY.name=v;});
+    /* 名前を入力し終えた時点で、同じ名前の回答があれば呼び戻す。
+       端末のメモが消えた人でも、名前を入れるだけで前回の内容に戻れるようにするため。 */
+    ni.addEventListener("change",()=>{
+      const nm=(ni.value||"").trim();
+      if(!nm||MY_DIRTY||MY.loadedFrom===nm||!store[nm])return;
+      loadMyAnswerFrom(store,nm);rememberName(EV.id,nm);render();
+      toast("「"+nm+"」さんの前回の回答を読み込みました");
+    });
+    nameFld=el("label",{class:"fld"},el("span",{class:"lbl"},"あなたの名前"),ni);
+  }
+  const _db=decisionBanner();if(_db)app.append(_db);
   app.append(el("section",{class:"card"},
     el("div",{class:"eyebrow"},PROXY?"代理で入力（作成者）":"空いてる時間を教えて"),
     el("h1",{style:"font-size:20px;margin:6px 0 2px"},esc(EV.title)),
@@ -556,62 +836,150 @@ function viewRespond(app){
     nameFld,
     el("p",{class:"subtle",style:"margin:8px 0 0"},"マスをタップで ○→△→× と切り替え。指でなぞれば一気に塗れます。")
   ));
+  /* 端末のメモが消えた人（別ブラウザ・iOSの自動削除など）が自分の回答を取り戻すための保険。
+     自分の回答を特定できているときは出さない。 */
+  if(!PROXY&&!MY.loadedFrom&&!resolveMyAnswer(store,EV.id)){
+    const names=Object.keys(store);
+    if(names.length)app.append(recoverCard(store,names));
+  }
   app.append(el("section",{class:"card"},
     legend(),
     el("div",{class:"bulkrow"},
       el("span",{class:"subtle",style:"font-weight:700"},"一括："),
       el("button",{class:"btn ghost sm",type:"button",onclick:()=>setAllCells(2)},"全部 ○"),
       el("button",{class:"btn ghost sm",type:"button",onclick:()=>setAllCells(1)},"全部 △"),
-      el("button",{class:"btn ghost sm",type:"button",onclick:()=>setAllCells(0)},"クリア")
+      el("button",{class:"btn ghost sm clearbtn",id:"gridClear",type:"button",onclick:()=>setAllCells(0)},"クリア")
     ),
-    el("p",{class:"subtle",style:"margin:2px 0 8px"},"日付・時間帯の見出しをタップすると、その列／行をまとめて ○→△→× に切り替えできます。"),
+    el("p",{class:"subtle",style:"margin:2px 0 8px"},slotHeadBlank()?"日付の見出しをタップすると、その日をまとめて ○→△→× に切り替えできます。":"日付・時間帯の見出しをタップすると、その日／その時間帯をまとめて ○→△→× に切り替えできます。"),
     buildGrid("respond"),
-    el("label",{class:"fld"},el("span",{class:"lbl"},"ひとこと ",el("span",{class:"opt"},"任意")),textarea(MY.comment,"例）金曜は20時以降なら🙆",v=>MY.comment=v))
+    el("label",{class:"fld"},el("span",{class:"lbl"},"ひとこと ",el("span",{class:"opt"},"任意")),textarea(MY.comment,"例）金曜は20時以降なら🙆",v=>{MY_DIRTY=true;MY.comment=v;}))
   ));
-  renderBar([el("button",{class:"btn ghost sm",onclick:()=>{if(PROXY)endProxy();nav("result");}},PROXY?"やめる":"集計を見る"),el("div",{style:"flex:1"}),el("button",{class:"btn primary",onclick:submitAnswer},PROXY?"代理で保存 →":(overdue?"締切後だけど回答":"回答を保存 →"))]);
+  renderBar([
+    el("button",{class:"btn ghost sm",onclick:()=>{if(PROXY)endProxy();nav("result");}},PROXY?"やめる":"集計を見る"),
+    el("div",{style:"flex:1"}),
+    PROXY?null:el("button",{class:"btn ghost sm",onclick:()=>go("home")},"ホーム"),
+    el("div",{style:"flex:1"}),
+    el("button",{class:"btn primary",onclick:submitAnswer},PROXY?"代理で保存 →":(overdue?"締切後だけど回答":"回答を保存 →"))
+  ].filter(Boolean));
+  updateClearState();
 }
 function deadlineLine(){if(!EV.deadline)return null;const over=isOverdue();return el("div",{class:"deadline"+(over?" over":""),style:"margin-top:8px"},(over?"⏰ 締切を過ぎています（":"⏳ 回答締切：")+fmtDate(EV.deadline)+(over?"）":""));}
 function isOverdue(){if(!EV.deadline)return false;const d=new Date(EV.deadline+"T23:59:59");return Date.now()>d.getTime();}
 function legend(){return el("div",{class:"legend"},el("b",{},el("span",{class:"sym o"},"○"),"行ける"),el("b",{},el("span",{class:"sym t"},"△"),"たぶん/条件付き"),el("b",{},el("span",{class:"sym x"},"×"),"無理（空欄）"));}
+/* 回答済みの人の一覧から自分のものを選んで呼び戻す（名前の表記を思い出せなくても復旧できる） */
+function recoverCard(store,names){
+  const card=el("section",{class:"card",style:"border-color:var(--accent)"});
+  card.append(el("div",{class:"eyebrow"},"すでに回答した人はこちら"),
+    el("p",{class:"subtle",style:"margin:6px 0 10px"},"この端末に前回の記録が残っていないため、あなたの回答を自動で開けませんでした。回答済みなら下から自分の名前をタップすると、前回の内容を読み込んで修正できます。はじめての人はそのまま入力してください。"));
+  const box=el("div",{class:"people"});
+  names.forEach(n=>box.append(el("span",{class:"pill",onclick:()=>confirmRecover(store,n)},n)));
+  card.append(box);
+  return card;
+}
+function confirmRecover(store,name){
+  openPop(el("div",{},
+    el("h3",{},"「"+esc(name)+"」の回答を読み込む"),
+    el("p",{class:"subtle",style:"margin:6px 0 0"},"前回の ○/△ を呼び出して、修正できる状態にします。自分の回答のときだけ押してください。"),
+    el("div",{class:"row",style:"margin-top:14px"},
+      el("button",{class:"btn primary sm",onclick:()=>{
+        document.querySelectorAll(".pop-back").forEach(x=>x.remove());
+        if(loadMyAnswerFrom(store,name)){rememberName(EV.id,name);MY_DIRTY=false;render();toast("「"+name+"」さんの回答を読み込みました");}
+      }},"読み込む")
+    )
+  ));
+}
+/* 同じ名前の回答がすでにあるのに、それを読み込まずに保存しようとしている＝
+   以前の回答を今の入力（白紙かもしれない）で潰す事故。保存の前に必ず確認する。 */
+function confirmOverwrite(nm){
+  openPop(el("div",{},
+    el("h3",{},"「"+esc(nm)+"」の回答はすでにあります"),
+    el("p",{class:"subtle",style:"margin:6px 0 0"},"このまま保存すると、前の回答は今の入力で置き換わります。前の回答を直したいときは「読み込んで修正する」を選んでください。"),
+    el("div",{class:"row",style:"margin-top:14px"},
+      el("button",{class:"btn primary sm",onclick:()=>{
+        document.querySelectorAll(".pop-back").forEach(x=>x.remove());
+        if(loadMyAnswerFrom(ANS,nm)){rememberName(EV.id,nm);MY_DIRTY=false;render();toast("「"+nm+"」さんの回答を読み込みました。直して保存してください");}
+      }},"読み込んで修正する"),
+      el("button",{class:"btn ghost sm",style:"color:var(--no);border-color:var(--no)",onclick:()=>{
+        document.querySelectorAll(".pop-back").forEach(x=>x.remove());saveAnswerNow(nm);
+      }},"このまま上書きする")
+    )
+  ));
+}
 async function submitAnswer(){
   const nm=(PROXY||MY.name||"").trim();
   if(!nm){toast("名前を入れてください");return;}
-  if(!PROXY)localStorage.setItem(nameKey,nm);
+  if(!PROXY&&ANS[nm]&&MY.loadedFrom!==nm){confirmOverwrite(nm);return;}
+  await saveAnswerNow(nm);
+}
+async function saveAnswerNow(nm){
+  if(!PROXY)rememberName(EV.id,nm);
+  const wasEdit=!!ANS[nm];
   try{await putAnswer(nm,MY.cells,MY.comment.trim());}catch(e){toast("保存に失敗しました。通信環境を確認してください");return;}
-  const wasProxy=!!PROXY;if(wasProxy)endProxy();
+  MY.loadedFrom=nm;MY.eventId=EV.id;
+  const wasProxy=!!PROXY;
+  touchHistory({id:EV.id,title:EV.title,h:currentHash(),role:wasProxy?undefined:"respondent"});
+  if(wasProxy)endProxy();
   toast(wasProxy?nm+"さんの回答を保存しました":"回答を保存しました");
   nav("result");
 }
 
 /* ---------- grid builder ---------- */
+/* 表の向き。スマホは縦に長いので、候補日と時間帯のうち「数が多いほう」を縦に並べる。
+   例) 終日 × 8日 → 8行1列（横スクロール不要）／9-21時 × 3日 → 12行3列（従来どおり）。
+   セルのキーは常に "時間帯番号_日付番号" のままなので、保存済みの回答・集計には一切影響しない。 */
+function gridFlipped(){return cols(EV).length > rows(EV).length;}
+/* 「終日」のように1つしかない時間帯の見出しは情報量がないので出さない（場所も取る） */
+function slotHeadBlank(){const rs=rows(EV);return rs.length===1&&rs[0].label==="終日";}
+
 function buildGrid(kind){
-  const wrap=el("div",{class:"matrix-wrap"+(kind==="result"?" scrolly":"")});
+  const flip=gridFlipped();
+  const xs=flip?rows(EV):cols(EV);          // 横に並ぶもの
+  const ys=flip?cols(EV):rows(EV);          // 縦に並ぶもの
+  const keyOf=(xi,yi)=>flip?(xi+"_"+yi):(yi+"_"+xi);
+  const blankX=flip&&slotHeadBlank();       // 横軸が「終日」だけ＝見出しを空にする
+  const blankY=!flip&&slotHeadBlank();
+  const fillX=flip?fillRow:fillCol;         // 横軸の見出しタップ
+  const fillY=flip?fillCol:fillRow;         // 縦軸の見出しタップ
+  const head=(o,blank)=>blank?[""]:[o.label,o.sub?el("small",{},o.sub):null];
+
+  const wrap=el("div",{class:"matrix-wrap"});
   const table=el("table",{class:"mx"});
+  const noHead=blankX;                       // 横軸の見出しが空＝ヘッダー行に何も無い
   const thead=el("thead");const htr=el("tr");
-  htr.append(el("th",{},""));
-  cols(EV).forEach((c,ci)=>{const th=kind==="respond"?el("th",{class:"taph",title:"この日をまとめて ○→△→×",onclick:()=>fillCol(ci)},c.label,c.sub?el("small",{},c.sub):null):el("th",{},c.label,c.sub?el("small",{},c.sub):null);htr.append(th);});
-  thead.append(htr);table.append(thead);
+  htr.append(el("th",{class:"corner"},""));
+  xs.forEach((o,xi)=>{
+    const th=kind==="respond"
+      ? el("th",{class:"taph"+(blankX?" blank":""),title:"まとめて ○→△→×",onclick:()=>fillX(xi)},...head(o,blankX))
+      : el("th",{class:blankX?"blank":""},...head(o,blankX));
+    htr.append(th);
+  });
+  if(!noHead){thead.append(htr);table.append(thead);}
+
   const tbody=el("tbody");
   const store=kind==="result"?ANS:null;
   let agg=null,best=-1;
   if(kind==="result"){agg=computeAgg(store);best=agg.best;}
   const heatVar=getComputedStyle(document.documentElement).getPropertyValue("--heat");
-  rows(EV).forEach((r,ri)=>{
+  ys.forEach((o,yi)=>{
     const tr=el("tr");
-    tr.append(kind==="respond"?el("th",{class:"taph",title:"この時間帯をまとめて ○→△→×",onclick:()=>fillRow(ri)},r.label,r.sub?el("small",{},r.sub):null):el("th",{},r.label,r.sub?el("small",{},r.sub):null));
-    cols(EV).forEach((c,ci)=>{
-      const key=ri+"_"+ci;
+    tr.append(kind==="respond"
+      ? el("th",{class:"taph"+(blankY?" blank":""),title:"まとめて ○→△→×",onclick:()=>fillY(yi)},...head(o,blankY))
+      : el("th",{class:blankY?"blank":""},...head(o,blankY)));
+    xs.forEach((_,xi)=>{
+      const key=keyOf(xi,yi);
       if(kind==="respond"){
         const v=MY.cells[key]||0;
         tr.append(el("td",{class:"cell paint v"+v,"data-k":key},symbol(v)));
       }else{
         const a=agg.cells[key];
-        const td=el("td",{class:"cell"+(agg.score[key]===best&&best>0?" best":""),"data-k":key});
+        const hit=hlActive()&&hlMatch(a);
+        const td=el("td",{class:"cell"+(agg.score[key]===best&&best>0?" best":"")+(hlActive()?(hit?" hit":" dim"):"")+(PICK.on&&PICK.set.has(key)?" picked":""),"data-k":key});
         const ratio=agg.total?agg.score[key]/agg.total:0;
         td.style.background="rgba("+heatVar+","+(ratio*0.55).toFixed(3)+")";
         td.append(el("span",{style:"font-weight:800;font-size:14px;color:"+(ratio>0.55?"var(--accent)":"var(--ink)")},a.o?("○"+a.o):"·"));
         if(a.t)td.append(el("span",{class:"who"},"△"+a.t));
-        td.addEventListener("click",()=>showCellDetail(key,r,c));
+        const [ri,ci]=key.split("_").map(Number);
+        td.addEventListener("click",()=>{if(PICK.on){togglePick(key);}else{showCellDetail(key,rows(EV)[ri],cols(EV)[ci]);}});
         tr.append(td);
       }
     });
@@ -624,26 +992,73 @@ function buildGrid(kind){
     const step=()=>Math.round(wrap.clientWidth*0.7);
     const larr=el("div",{class:"scroll-arrow left","aria-label":"左へ",onclick:()=>wrap.scrollBy({left:-step(),behavior:"smooth"})},"‹");
     const rarr=el("div",{class:"scroll-arrow right","aria-label":"右へ",onclick:()=>wrap.scrollBy({left:step(),behavior:"smooth"})},"›");
-    box.append(larr,rarr,el("div",{class:"gridhint"},"1本指でなぞって入力／2本指で表を左右にスクロール"));
-    const upd=()=>{const of=wrap.scrollWidth>wrap.clientWidth+4;larr.classList.toggle("show",of&&wrap.scrollLeft>4);rarr.classList.toggle("show",of&&wrap.scrollLeft+wrap.clientWidth<wrap.scrollWidth-4);};
+    const hint=el("div",{class:"gridhint"},"1本指でなぞって入力できます");
+    box.append(larr,rarr,hint);
+    const upd=()=>{
+      const of=wrap.scrollWidth>wrap.clientWidth+4;
+      larr.classList.toggle("show",of&&wrap.scrollLeft>4);
+      rarr.classList.toggle("show",of&&wrap.scrollLeft+wrap.clientWidth<wrap.scrollWidth-4);
+      // 横スクロールが要らない形なら、案内も出さない（余白でそのまま上下にスクロールできる）
+      hint.textContent=of?"1本指でなぞって入力／2本指で表を左右にスクロール":"1本指でなぞって入力できます";
+    };
     // 矢印を「今見えている表の縦中央」に追従させる（縦に長い表でも常に視界に入る）
     const place=()=>{const r=wrap.getBoundingClientRect();const vh=window.innerHeight||document.documentElement.clientHeight;const top=Math.max(r.top,8),bot=Math.min(r.bottom,vh-72);const rel=(top+bot)/2-r.top;larr.style.top=rarr.style.top=rel+"px";};
     const onScroll=()=>{if(!document.body.contains(larr)){window.removeEventListener("scroll",onScroll);return;}place();upd();};
     wrap.addEventListener("scroll",upd);window.addEventListener("scroll",onScroll,{passive:true});
-    requestAnimationFrame(()=>{place();upd();});
+    requestAnimationFrame(()=>{fitCellWidth(wrap,table,flip,xs.length);place();upd();});
+    if(!noHead)attachStickyHeader(box,wrap,table,"respond",fillX);
   }else{
-    const hint=el("div",{class:"gridhint",style:"display:none"},"スワイプで上下・左右にスクロール（日付は上部に固定）");
+    const hint=el("div",{class:"gridhint",style:"display:none"},"← 横にスワイプで移動 →");
     box.append(hint);
-    requestAnimationFrame(()=>{if(wrap.scrollWidth>wrap.clientWidth+4||wrap.scrollHeight>wrap.clientHeight+4)hint.style.display="block";});
+    requestAnimationFrame(()=>{fitCellWidth(wrap,table,flip,xs.length);if(wrap.scrollWidth>wrap.clientWidth+4)hint.style.display="block";});
+    if(!noHead)attachStickyHeader(box,wrap,table);
   }
   return box;
 }
+/* 縦長に組んだときは、表を画面いっぱいに広げない。
+   右側に余白を残すことで、1本指でページを送ろうとして入力してしまう事故を防ぐ。 */
+function fitCellWidth(wrap,table,flip,n){
+  if(!flip||!n)return;
+  const avail=wrap.clientWidth;if(!avail)return;
+  const th=table.querySelector("tbody th");
+  const headW=th?Math.ceil(th.getBoundingClientRect().width):56;
+  const w=Math.max(56,Math.min(112,Math.floor((avail*0.78-headW)/n)));
+  table.style.setProperty("--cellw",w+"px");
+}
+
+function attachStickyHeader(box,wrap,table,kind,fillX){
+  const realHead=table.querySelector("thead");
+  const fh=el("div",{class:"float-head"+(kind==="respond"?" tappable":"")});
+  const ftable=el("table",{class:"mx"});
+  ftable.append(realHead.cloneNode(true));
+  fh.append(ftable);box.append(fh);
+  // 回答画面：浮動ヘッダーの日付タップでも列を一括入力できるようにする
+  if(kind==="respond"&&fillX)ftable.querySelectorAll("th").forEach((th,i)=>{if(i>0)th.addEventListener("click",()=>fillX(i-1));});
+  const sync=()=>{
+    if(!document.body.contains(fh)){window.removeEventListener("scroll",sync,true);return;}
+    const ah=document.querySelector("header.app");const ahb=ah?Math.round(ah.getBoundingClientRect().bottom):0;
+    const wr=wrap.getBoundingClientRect(),hr=realHead.getBoundingClientRect();
+    const show=hr.top<ahb-1&&wr.bottom>ahb+hr.height+4;
+    fh.classList.toggle("show",show);
+    if(!show)return;
+    fh.style.top=ahb+"px";
+    fh.style.left=Math.round(wr.left)+"px";
+    fh.style.width=Math.round(wrap.clientWidth)+"px";
+    const rc=realHead.querySelectorAll("th"),fc=ftable.querySelectorAll("th");
+    rc.forEach((c,i)=>{if(fc[i])fc[i].style.width=Math.round(c.getBoundingClientRect().width)+"px";});
+    fh.scrollLeft=wrap.scrollLeft;
+  };
+  window.addEventListener("scroll",sync,true);wrap.addEventListener("scroll",sync);window.addEventListener("resize",sync);
+  requestAnimationFrame(sync);
+}
 function symbol(v){return v===2?"○":v===1?"△":"×";}
 /* 一括入力：全体／列（日付）／行（時間帯）を ○→△→× でまとめて切り替え */
-function setAllCells(v){rows(EV).forEach((r,ri)=>cols(EV).forEach((c,ci)=>{MY.cells[ri+"_"+ci]=v;}));render();}
+function hasAnyInput(){for(const k in MY.cells)if(MY.cells[k])return true;return false;}
+function updateClearState(){const b=$("#gridClear");if(b)b.classList.toggle("armed",hasAnyInput());}
+function setAllCells(v){MY_DIRTY=true;rows(EV).forEach((r,ri)=>cols(EV).forEach((c,ci)=>{MY.cells[ri+"_"+ci]=v;}));render();}
 function nextForKeys(keys){const allO=keys.every(k=>(MY.cells[k]||0)===2);if(allO)return 1;const allT=keys.every(k=>(MY.cells[k]||0)===1);if(allT)return 0;return 2;}
-function fillCol(ci){const keys=rows(EV).map((r,ri)=>ri+"_"+ci);const v=nextForKeys(keys);keys.forEach(k=>MY.cells[k]=v);render();}
-function fillRow(ri){const keys=cols(EV).map((c,ci)=>ri+"_"+ci);const v=nextForKeys(keys);keys.forEach(k=>MY.cells[k]=v);render();}
+function fillCol(ci){MY_DIRTY=true;const keys=rows(EV).map((r,ri)=>ri+"_"+ci);const v=nextForKeys(keys);keys.forEach(k=>MY.cells[k]=v);render();}
+function fillRow(ri){MY_DIRTY=true;const keys=cols(EV).map((c,ci)=>ri+"_"+ci);const v=nextForKeys(keys);keys.forEach(k=>MY.cells[k]=v);render();}
 function enablePaint(wrap){
   let painting=false,paintVal=null,mt=false,lx=0,ly=0,startCell=null,moved=false;
   const avg=(t,a)=>{let s=0;for(const p of t)s+=p[a];return s/t.length;};
@@ -653,7 +1068,7 @@ function enablePaint(wrap){
   wrap.addEventListener("touchmove",e=>{if(mt&&e.touches.length>=2){const x=avg(e.touches,"clientX"),y=avg(e.touches,"clientY");wrap.scrollLeft+=lx-x;window.scrollBy(0,ly-y);lx=x;ly=y;}},{passive:true});
   wrap.addEventListener("touchend",e=>{if(e.touches.length<2)mt=false;},{passive:true});
   const cellAt=(x,y)=>{const e=document.elementFromPoint(x,y);return e&&e.closest?e.closest(".cell"):null;};
-  const setCell=(td,v)=>{const k=td.getAttribute("data-k");MY.cells[k]=v;td.className="cell paint v"+v;td.textContent=symbol(v);};
+  const setCell=(td,v)=>{MY_DIRTY=true;const k=td.getAttribute("data-k");MY.cells[k]=v;td.className="cell paint v"+v;td.textContent=symbol(v);updateClearState();};
   const cycle=v=>v===0?2:v===2?1:0;
   // pointerdownでは即入力せず「保留」。指1本の移動 or 離した時に確定（2本指なら破棄済み）
   wrap.addEventListener("pointerdown",e=>{if(mt)return;const td=e.target.closest(".cell");if(!td)return;e.preventDefault();paintVal=cycle(MY.cells[td.getAttribute("data-k")]||0);startCell=td;moved=false;painting=true;try{wrap.setPointerCapture(e.pointerId);}catch(_){}});
@@ -673,6 +1088,105 @@ function computeAgg(store){
   for(const k in score)if(score[k]>best)best=score[k];
   return {cells,score,total,names,best};
 }
+/* ===== 候補をカレンダーに入れる（確定前・全員が使える） =====
+   長期間の調整では、確定を待たずに「この辺が空いていそう」を自分の予定表に
+   仮押さえしたい。誰でも枠を選んで、まとめてカレンダーに入れられるようにする。 */
+const PICK={on:false,set:new Set(),title:null};
+function pickReset(){PICK.on=false;PICK.set.clear();PICK.title=null;}
+function togglePick(key){if(PICK.set.has(key))PICK.set.delete(key);else PICK.set.add(key);render();}
+function pickTitle(){return PICK.title!=null?PICK.title:("[候補]"+(EV?EV.title:""));}
+/* 選んだマスを、日付ごとに「つながっている時間帯」へまとめる
+   （1時間刻みで4コマ選んだら、4件ではなく1件の予定にする） */
+function pickSpans(){
+  const byDate={};
+  PICK.set.forEach(k=>{
+    const [ri,ci]=k.split("_").map(Number);
+    const c=cols(EV)[ci];const r=rows(EV)[ri];
+    if(!c||!r)return;
+    (byDate[c.date]=byDate[c.date]||[]).push(ri);
+  });
+  const out=[];
+  Object.keys(byDate).sort().forEach(date=>{
+    const list=byDate[date].sort((a,b)=>a-b);
+    let s=null,e=null,prev=null;
+    list.forEach(ri=>{
+      if(prev!==null&&rowMin(ri)===e){e=rowEndMin(ri);prev=ri;return;}   // 連続しているので伸ばす
+      if(prev!==null)out.push({d:date,s,e});
+      s=rowMin(ri);e=rowEndMin(ri);prev=ri;
+    });
+    if(prev!==null)out.push({d:date,s,e});
+  });
+  return out.sort((x,y)=>x.d===y.d?x.s-y.s:(x.d<y.d?-1:1));
+}
+function pickCard(agg){
+  const card=el("section",{class:"card pickcard"});
+  card.append(el("div",{class:"eyebrow"},"候補をカレンダーに入れる"),
+    el("p",{class:"subtle",style:"margin:6px 0 10px"},"日程が決まる前でも、気になる枠を選んで自分のカレンダーに仮登録できます。長期間の調整で「とりあえず空けておく」のに使ってください。"));
+  if(!PICK.on){
+    card.append(el("div",{class:"row"},el("button",{class:"btn ghost sm",onclick:()=>{PICK.on=true;render();}},"🗓 枠を選ぶ")));
+    return card;
+  }
+  card.append(el("div",{class:"note",style:"margin-bottom:10px"},"下のヒートマップのマスをタップして選んでください。連続した時間帯は自動で1つの予定にまとめます。"));
+  const tools=el("div",{class:"row tight",style:"margin-bottom:10px;flex-wrap:wrap"});
+  if(hlActive())tools.append(el("button",{class:"btn ghost sm",onclick:()=>{
+    for(const k in agg.cells)if(hlMatch(agg.cells[k]))PICK.set.add(k);render();
+  }},"条件に合う枠をまとめて選ぶ"));
+  tools.append(el("button",{class:"btn ghost sm",onclick:()=>{PICK.set.clear();render();}},"選択をクリア"));
+  tools.append(el("button",{class:"btn ghost sm",onclick:()=>{pickReset();render();}},"やめる"));
+  card.append(tools);
+  const ti=el("input",{type:"text",value:pickTitle(),placeholder:"カレンダーに入れる名前",oninput:e=>{PICK.title=e.target.value;}});
+  card.append(el("div",{class:"subtle",style:"margin-bottom:4px;font-weight:700"},"予定の名前（あとから直せます）"),ti);
+  const spans=pickSpans();
+  if(!spans.length){
+    card.append(el("div",{class:"subtle",style:"margin-top:10px"},"まだ選ばれていません。表のマスをタップしてください。"));
+    return card;
+  }
+  const list=el("div",{style:"margin-top:12px"});
+  list.append(el("div",{class:"subtle",style:"font-weight:700;margin-bottom:6px"},"選択中："+PICK.set.size+"コマ → "+spans.length+"件の予定"));
+  spans.slice(0,12).forEach(sp=>list.append(el("div",{class:"row vcenter",style:"justify-content:space-between;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:7px 10px;margin-bottom:5px"},
+    el("span",{style:"font-weight:700"},decLabelOne(sp)),
+    el("button",{class:"btn ghost sm",onclick:()=>window.open(gcalURL(pickTitle(),decDatesOf(sp).s,decDatesOf(sp).e),"_blank")},"Google")
+  )));
+  if(spans.length>12)list.append(el("div",{class:"subtle"},"ほか "+(spans.length-12)+"件"));
+  card.append(list);
+  card.append(el("div",{class:"row",style:"margin-top:12px"},
+    el("button",{class:"btn primary sm",onclick:()=>addPickedToCalendar(spans)},"⬇ "+spans.length+"件まとめてカレンダーに追加")));
+  card.append(el("div",{class:"subtle",style:"margin-top:6px"},"iPhone / Mac は「まとめて追加」1回で全部入ります。Googleカレンダーは上の一覧から1件ずつ追加してください。"));
+  return card;
+}
+function addPickedToCalendar(spans){
+  if(isInAppBrowser()){addToAppleCalendar(decDatesOf(spans[0]));return;}   // LINE等では外部ブラウザへ誘導
+  downloadICSMulti(pickTitle(),spans.map(sp=>{const dd=decDatesOf(sp);return {s:dd.s,e:dd.e};}));
+  toast(spans.length+"件をカレンダーに追加しました");
+}
+
+/* 条件で目立たせる（○がN人以上／○+△がM人以上）。
+   候補が多くて△が入り組んでいるとき、成立しうる枠だけを浮かび上がらせる */
+const HL={o:0,ot:0};
+function hlActive(){return HL.o>0||HL.ot>0;}
+function hlMatch(a){return a.o>=HL.o&&(a.o+a.t)>=HL.ot;}
+function hlCount(agg){let n=0;for(const k in agg.cells)if(hlMatch(agg.cells[k]))n++;return n;}
+function hlCard(agg){
+  const total=agg.total;
+  const card=el("section",{class:"card hlcard"});
+  card.append(el("div",{class:"eyebrow"},"条件で目立たせる"),
+    el("p",{class:"subtle",style:"margin:6px 0 10px"},"「○が4人以上」「○と△を合わせて5人以上」のように条件を決めると、それを満たす枠だけがくっきり表示されます（回答は変わりません）。"));
+  const mk=(label,val,onch)=>{
+    const sel=el("select",{class:"inline",onchange:e=>{onch(+e.target.value);render();}});
+    for(let i=0;i<=total;i++){const o=el("option",{value:i},i===0?"指定なし":i+"人以上");if(i===val)o.selected=true;sel.append(o);}
+    return el("div",{class:"row vcenter tight"},el("span",{class:"subtle",style:"min-width:104px"},label),sel);
+  };
+  const box=el("div",{style:"display:grid;gap:8px"});
+  box.append(mk("○ が",HL.o,v=>HL.o=v),mk("○＋△ が",HL.ot,v=>HL.ot=v));
+  card.append(box);
+  if(hlActive()){
+    const n=hlCount(agg);
+    card.append(el("div",{class:"filternote",style:"margin-top:10px"},
+      el("span",{},n?"✨ 条件に合う枠が "+n+" 個あります":"条件に合う枠はありませんでした。人数をゆるめてみてください"),
+      el("button",{class:"btn ghost sm",style:"margin-left:auto",onclick:()=>{HL.o=0;HL.ot=0;render();}},"条件を解除")));
+  }
+  return card;
+}
 function viewResult(app){
   const store=ANS;const agg=computeAgg(store);
   const head=el("section",{class:"card"});
@@ -686,16 +1200,19 @@ function viewResult(app){
     head.append(el("div",{class:"pick"},el("div",{class:"badge"},"イチオシ"),el("div",{class:"txt"},slotLabel(b.r,b.c),el("small",{},agg.cells[b.k].o+"人が○"+(agg.cells[b.k].t?" / "+agg.cells[b.k].t+"人が△":"")+(bestSlots.length>1?"（ほか"+(bestSlots.length-1)+"枠も同点）":"")))));
     head.append(el("div",{class:"summary"},stat("回答",agg.total,"人"),stat("候補",rows(EV).length*cols(EV).length,"枠"),stat("全員○",countAllYes(agg),"枠")));
   }
+  const _db=decisionBanner();if(_db)app.append(_db);
   app.append(head);
 
-  const me=localStorage.getItem(nameKey);
-  if(me&&store[me]){MY.name=me;MY.cells=store[me].cells||{};MY.comment=store[me].comment||"";}
+  const me=resolveMyAnswer(store,EV.id);
+  if(me&&!MY_DIRTY)loadMyAnswerFrom(store,me);
   if(!remoteEnabled()&&me&&store[me]){
     app.append(el("section",{class:"card",style:"border-color:var(--accent)"},el("div",{style:"display:flex;gap:10px;align-items:center;flex-wrap:wrap"},el("div",{style:"flex:1;min-width:180px"},el("div",{style:"font-weight:800"},"あなたの回答を主催者に送る"),el("div",{class:"subtle"},"別の端末で集計している場合は、このコードをLINEで送ってください。")),el("button",{class:"btn primary sm",onclick:async()=>{await copy(myAnswerCode());toast("回答コードをコピーしました");}},"回答コードをコピー"))));
   }
 
   const allNames=Object.keys(store);
-  const gcard=el("section",{class:"card"},el("div",{style:"display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"},el("h2",{style:"font-size:15px"},"空き状況ヒートマップ"),el("span",{class:"subtle"},FILTER.size?"絞り込み中":"マスをタップで内訳")));
+  if(agg.total)app.append(hlCard(agg));
+  if(agg.total)app.append(pickCard(agg));
+  const gcard=el("section",{class:"card"},el("div",{style:"display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"},el("h2",{style:"font-size:15px"},"空き状況ヒートマップ"),el("span",{class:"subtle"},hlActive()?"条件で強調中":(FILTER.size?"絞り込み中":"マスをタップで内訳"))));
   gcard.append(buildGrid("result"));
   if(allNames.length){
     gcard.append(el("div",{},el("div",{class:"subtle",style:"margin:12px 0 6px;font-weight:700"},"回答した人 ",el("span",{style:"font-weight:400"},"・タップで絞り込み／長押しでその人の予定を強調")),peopleRow(allNames,store)));
@@ -750,11 +1267,10 @@ function viewResult(app){
     ));
   }
 
-  if(bestSlots.length){
-    app.append(el("section",{class:"card"},el("h2",{style:"font-size:15px;margin-bottom:8px"},"この枠で決める"),el("div",{class:"row"},...bestSlots.slice(0,4).map(b=>el("button",{class:"btn ghost sm",onclick:()=>confirmSlot(b)},slotLabel(b.r,b.c)))),el("p",{class:"subtle",style:"margin:10px 0 0"},"確定した枠は、スマホのカレンダー（iPhone標準／Googleカレンダー）にそのまま追加できます。")));
-  }
+  const cc=confirmCard(bestSlots);if(cc)app.append(cc);
 
-  renderBar([el("button",{class:"btn ghost sm",onclick:()=>go("home")},"ホーム"),el("div",{style:"flex:1"}),el("button",{class:"btn primary",onclick:()=>nav("respond")},"回答する / 直す")]);
+  const answered=!!resolveMyAnswer(store,EV.id);
+  renderBar([el("button",{class:"btn ghost sm",onclick:()=>go("home")},"ホーム"),el("div",{style:"flex:1"}),el("button",{class:"btn primary",onclick:()=>nav("respond")},answered?"自分の回答を修正する":"自分の空き時間を入力する")]);
 }
 function stat(k,v,u){return el("div",{class:"stat"},el("div",{class:"k"},k),el("div",{class:"v tnum"},v," ",el("small",{},u)));}
 function countAllYes(agg){let n=0;for(const k in agg.cells)if(agg.total>0&&agg.cells[k].o===agg.total)n++;return n;}
@@ -763,7 +1279,7 @@ function toggleFilter(n){if(FILTER.has(n))FILTER.delete(n);else FILTER.add(n);re
 function highlightPerson(name){const cells=(ANS[name]||{}).cells||{};document.querySelectorAll("#app .matrix-wrap td[data-k]").forEach(td=>{const v=cells[td.getAttribute("data-k")]||0;td.classList.toggle("hi-o",v===2);td.classList.toggle("hi-t",v===1);});}
 function clearHighlight(){document.querySelectorAll("#app .matrix-wrap td.hi-o,#app .matrix-wrap td.hi-t").forEach(td=>td.classList.remove("hi-o","hi-t"));}
 function peopleRow(names,store){
-  const box=el("div",{class:"people"});const me=localStorage.getItem(nameKey);
+  const box=el("div",{class:"people"});const me=EV?resolveMyAnswer(store,EV.id):"";
   names.forEach(n=>{
     const cm=store[n].comment;
     const p=el("span",{class:"pill"+(n===me?" me":"")+(FILTER.has(n)?" on":""),title:cm||""},n+(cm?" 💬":""));
@@ -813,21 +1329,173 @@ function showCellDetail(key,r,c){
 function grp(title,arr){const g=el("div",{class:"grp"});g.append(el("div",{class:"gh"},title));if(!arr.length)g.append(el("span",{class:"subtle"},"—"));else{const box=el("div",{class:"people"});arr.forEach(n=>box.append(el("span",{class:"pill"},n)));g.append(box);}return g;}
 function openPop(content){const back=el("div",{class:"pop-back",onclick:e=>{if(e.target===back)close();}});const pop=el("div",{class:"pop"});pop.append(content,el("div",{style:"margin-top:16px"},el("button",{class:"btn ghost block",onclick:close},"閉じる")));back.append(pop);$("#pop").append(back);function close(){back.remove();}}
 
-/* ---------- calendar export ---------- */
-function confirmSlot(b){
-  const actions=el("div",{});
-  actions.append(el("h3",{},"「"+slotLabel(b.r,b.c)+"」に決定"));
-  if(b.c.date){
-    const start=new Date(b.c.date+"T00:00:00");start.setHours(b.r.h||10,b.r.m||0,0,0);
-    const end=new Date(start);end.setHours(start.getHours()+(b.r.label==="終日"?9:2));
-    actions.append(el("p",{class:"subtle",style:"margin:10px 0 2px"},"下のボタンから、スマホのカレンダーにこの予定を追加できます。"));
-    actions.append(el("div",{class:"row",style:"margin-top:6px"},el("button",{class:"btn primary sm",onclick:()=>downloadICS(EV.title,start,end)},"iPhone / Macのカレンダーに追加"),el("button",{class:"btn ghost sm",onclick:()=>window.open(gcalURL(EV.title,start,end),"_blank")},"Googleカレンダーに追加")));
+/* ---------- 日程の確定（決定）＆カレンダー ---------- */
+function rowMin(ri){const r=rows(EV)[ri];return r.h*60+(r.m||0);}
+function rowDur(ri){const rs=rows(EV);if(rs.length<2)return rs[0].label==="終日"?540:120;if(ri<rs.length-1)return rowMin(ri+1)-rowMin(ri);return rowMin(ri)-rowMin(ri-1);}
+function rowEndMin(ri){return rowMin(ri)+rowDur(ri);}
+function fmtMin(m){return pad(Math.floor(m/60))+":"+pad(m%60);}
+function decs(){return normDecs(EV&&EV.decisions);}
+function decDatesOf(d){const s=new Date(d.d+"T00:00:00");s.setMinutes(s.getMinutes()+d.s);const e=new Date(d.d+"T00:00:00");e.setMinutes(e.getMinutes()+d.e);return {s,e};}
+function decLabelOne(d){return fmtDate(d.d)+" "+fmtMin(d.s)+"〜"+fmtMin(d.e);}
+function decLabel(){return decs().map(decLabelOne).join("、");}
+async function persistLocal(){SUPPRESS_HASH=true;location.hash="e="+encEvent(EV);}
+/* 権限まわりの失敗は、原因を推測せずサーバーの言い分をそのまま伝える。
+   旧仕様で作られた調整（合鍵がサーバーに無い）は専用の案内に切り替える。 */
+function decisionError(e){
+  if(e&&e.message==="legacy_no_admin"){
+    toast("この調整はセキュリティ更新より前に作られたため、作成者の合鍵がサーバーにありません");
+    LEGACY_CLAIM=true;return;
   }
-  actions.append(el("div",{class:"row",style:"margin-top:10px"},el("button",{class:"btn line sm",onclick:()=>shareLine(shareURL(),"【決定】"+EV.title+" は「"+slotLabel(b.r,b.c)+"」になりました！")},"LINEで決定を共有")));
-  openPop(actions);
+  if(e&&e.message==="forbidden"){toast("この操作の権限がありません（作成者の端末か、オーナー合言葉が必要です）");return;}
+  toast("保存できませんでした。"+rpcReason(e));
+}
+let LEGACY_CLAIM=false;   // 合鍵が無い旧調整を検出したら、引き継ぎ導線を出す
+async function saveDecisions(list,msg,action){
+  const prev=EV.decisions;EV.decisions=normDecs(list);
+  try{if(remoteEnabled())await remoteSetDecision(EV.id,EV.decisions.length?EV.decisions:null);else await persistLocal();}
+  catch(e){EV.decisions=prev;decisionError(e);render();return false;}
+toast(msg);render();return true;
+}
+const sameDec=(a,b)=>a.d===b.d&&a.s===b.s&&a.e===b.e;
+async function addDecision(dec){
+  const cur=decs();
+  if(cur.some(x=>sameDec(x,dec))){toast("その枠はすでに確定しています");return;}
+  await saveDecisions(cur.concat([dec]),"日程を確定しました","decided");
+}
+async function removeDecision(dec){
+  const left=decs().filter(x=>!sameDec(x,dec));
+  await saveDecisions(left,left.length?"この枠の確定を取り消しました":"確定を取り消して、調整中に戻しました","decision_cleared");
+}
+async function clearDecision(){
+  await saveDecisions([],"確定を取り消して、調整中に戻しました","decision_cleared");
+}
+async function setAllowConfirm(v){const prev=EV.allowConfirm;EV.allowConfirm=v;
+  try{if(remoteEnabled())await remoteSetAllow(EV.id,v);else await persistLocal();}
+  catch(e){EV.allowConfirm=prev;decisionError(e);render();return;}
+  toast(v?"他の人も確定できるようにしました":"確定を管理者のみに戻しました");render();}
+function canConfirm(){return isAdmin()||EV.allowConfirm;}
+/* 確定の取り消し（延期などで調整を再開したいとき）。全員の画面から決定が消えるので二段階で確認する */
+function confirmUnfix(){
+  const n=decs().length;
+  openPop(el("div",{},
+    el("h3",{},"確定を取り消して調整に戻す"),
+    el("p",{class:"subtle",style:"margin:6px 0 0"},"確定していた"+n+"件を取り消し、みんなの画面から「決定しました」の表示を消します。回答はそのまま残るので、そのまま日程調整を続けられます。"),
+    el("div",{class:"row",style:"margin-top:14px"},
+      el("button",{class:"btn primary sm",style:"background:var(--no)",onclick:async(e)=>{e.target.disabled=true;document.querySelectorAll(".pop-back").forEach(x=>x.remove());await clearDecision();}},"取り消して調整に戻す")
+    )
+  ));
+}
+/* 旧仕様（セキュリティ更新前）に作られた調整は、サーバーに作成者の合鍵が無い。
+   オーナー合言葉で本人確認できたときだけ、この端末の合鍵を登録して権限を引き継ぐ。 */
+function legacyClaimBox(){
+  const box=el("div",{class:"note",style:"margin-top:12px"});
+  box.append(el("div",{style:"font-weight:800;margin-bottom:4px"},"この調整は「作成者の合鍵」を持っていません"),
+    el("div",{class:"subtle"},"セキュリティ更新より前に作られたためです。オーナー合言葉を入れると、この端末を作成者として登録し直し、以降は確定や代理入力がふつうに使えるようになります。"));
+  const inp=el("input",{type:"password",placeholder:"オーナー合言葉",style:"margin-top:8px"});
+  box.append(inp,el("div",{class:"row",style:"margin-top:8px"},
+    el("button",{class:"btn primary sm",onclick:async()=>{
+      const pass=inp.value.trim();if(!pass){toast("合言葉を入力してください");return;}
+      const ak=rid(24);
+      try{await rpc("sukima_owner_claim_event",{p_pass:pass,p_id:EV.id,p_admin_key:ak});}
+      catch(e){toast(e&&e.message==="forbidden"?"合言葉が違います":"引き継げませんでした。"+rpcReason(e));return;}
+      markAdmin(EV.id);try{localStorage.setItem(adminSecretKey(EV.id),ak);}catch(_){}
+      LEGACY_CLAIM=false;toast("この端末を作成者として登録しました");render();
+    }},"この端末に権限を引き継ぐ")));
+  return box;
+}
+
+// 決定バナー（決定済みのとき、全員に表示）
+function decisionBanner(){
+  const list=decs();
+  if(!list.length)return null;
+  const card=el("section",{class:"card decided"});
+  card.append(el("div",{class:"eyebrow",style:"color:var(--ok)"},list.length>1?"決定しました 🎉（"+list.length+"件）":"決定しました 🎉"));
+  list.forEach(d=>{
+    const dd=decDatesOf(d);
+    const box=el("div",{style:"padding:8px 0;border-top:1px solid var(--line)"});
+    box.append(el("div",{class:"decdate"},decLabelOne(d)));
+    box.append(el("div",{class:"row tight",style:"margin-top:6px"},
+      el("button",{class:"btn primary sm",onclick:()=>addToAppleCalendar(dd)},"iPhone / Macに追加"),
+      el("button",{class:"btn ghost sm",onclick:()=>window.open(gcalURL(EV.title,dd.s,dd.e),"_blank")},"Googleに追加")
+    ));
+    card.append(box);
+  });
+  card.append(el("div",{class:"subtle",style:"margin:8px 0 10px"},esc(EV.title)));
+  if(list.length>1)card.append(el("div",{class:"row",style:"margin-bottom:8px"},
+    el("button",{class:"btn primary sm",onclick:()=>addAllToAppleCalendar(list)},"⬇ "+list.length+"件まとめてiPhone / Macに追加")));
+  card.append(el("div",{class:"row"},
+    el("button",{class:"btn line sm",onclick:()=>shareLine(shareURL(),"【決定】"+EV.title+" は「"+decLabel()+"」になりました！ ↓このリンクからカレンダーに追加できます")},"LINEで共有")
+  ));
+  if(canConfirm())card.append(el("div",{class:"row",style:"margin-top:10px"},
+    el("button",{class:"btn ghost sm",style:"color:var(--no);border-color:var(--no)",onclick:confirmUnfix},"確定を取り消して調整に戻す")));
+  if(isInAppBrowser())card.append(el("div",{class:"inapp"},
+    el("span",{},"⚠️ LINEなどアプリ内の画面では、iPhone標準カレンダーへの追加がブロックされます。下のボタンでブラウザで開いてから追加してください（Googleカレンダーはこのままでも追加できます）。"),
+    el("button",{class:"btn primary sm",style:"margin-top:8px",onclick:openExternally},"Safari / Chromeで開く")
+  ));
+  return card;
+}
+
+// 確定操作カード（管理者、または許可されたとき）
+const CONF={ci:0,si:0,ei:0,touched:false};
+function confirmCard(bestSlots){
+  if(!canConfirm())return null;
+  if(!CONF.touched&&bestSlots&&bestSlots.length){const b=bestSlots[0];CONF.ci=cols(EV).indexOf(b.c);CONF.si=CONF.ei=rows(EV).indexOf(b.r);}
+  CONF.ci=Math.max(0,Math.min(CONF.ci,cols(EV).length-1));CONF.si=Math.max(0,Math.min(CONF.si,rows(EV).length-1));CONF.ei=Math.max(CONF.si,Math.min(CONF.ei,rows(EV).length-1));
+  const card=el("section",{class:"card confirm",style:"border-color:var(--accent)"});
+  const fixed=decs();
+  card.append(el("div",{class:"eyebrow"},fixed.length?"日程の確定（追加・取り消し）":"日程を確定する"),el("p",{class:"subtle",style:"margin:6px 0 10px"},"日付と時間（開始〜終了）を選んで確定。複数コマをまたいでもOK。毎週・隔週などは、この操作をくり返して何日でも確定できます。確定すると全員の画面に決定が出て、リンクからカレンダー追加できます。"));
+  if(fixed.length){
+    const done=el("div",{style:"margin-bottom:12px"});
+    done.append(el("div",{class:"subtle",style:"font-weight:700;margin-bottom:6px"},"確定済み（"+fixed.length+"件）"));
+    fixed.forEach(d=>done.append(el("div",{class:"row vcenter",style:"justify-content:space-between;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:6px"},
+      el("span",{style:"font-weight:700"},decLabelOne(d)),
+      el("button",{class:"btn ghost sm",style:"color:var(--no);border-color:var(--no)",onclick:()=>removeDecision(d)},"取り消す")
+    )));
+    card.append(done);
+  }
+  const dsel=el("select",{class:"inline",onchange:e=>{CONF.ci=+e.target.value;CONF.touched=true;}});
+  cols(EV).forEach((c,ci)=>{const o=el("option",{value:ci},c.label+"("+c.sub+")");if(ci===CONF.ci)o.selected=true;dsel.append(o);});
+  const ssel=el("select",{class:"inline",onchange:e=>{CONF.si=+e.target.value;CONF.touched=true;if(CONF.ei<CONF.si)CONF.ei=CONF.si;render();}});
+  rows(EV).forEach((r,ri)=>{const o=el("option",{value:ri},fmtMin(rowMin(ri)));if(ri===CONF.si)o.selected=true;ssel.append(o);});
+  const esel=el("select",{class:"inline",onchange:e=>{CONF.ei=+e.target.value;CONF.touched=true;}});
+  rows(EV).forEach((r,ri)=>{const o=el("option",{value:ri},fmtMin(rowEndMin(ri)));if(ri===CONF.ei)o.selected=true;if(ri<CONF.si)o.disabled=true;esel.append(o);});
+  card.append(el("div",{class:"row vcenter tight",style:"flex-wrap:wrap"},dsel,el("span",{class:"subtle"},"開始"),ssel,el("span",{class:"subtle"},"〜 終了"),esel));
+  card.append(el("div",{class:"row",style:"margin-top:12px"},el("button",{class:"btn primary sm",onclick:()=>{if(CONF.ei<CONF.si){toast("終了は開始より後にしてください");return;}addDecision({d:cols(EV)[CONF.ci].date,s:rowMin(CONF.si),e:rowEndMin(CONF.ei)});}},fixed.length?"この枠も確定に追加する":"この日程で確定する")));
+  if(fixed.length)card.append(el("div",{class:"row",style:"margin-top:8px"},el("button",{class:"btn ghost sm",style:"color:var(--no);border-color:var(--no)",onclick:confirmUnfix},"すべての確定を取り消して調整に戻す")));
+  if(LEGACY_CLAIM)card.append(legacyClaimBox());
+  if(isAdmin()){const chk=el("input",{type:"checkbox",style:"width:auto",onchange:e=>setAllowConfirm(e.target.checked)});chk.checked=!!EV.allowConfirm;card.append(el("label",{class:"row vcenter tight",style:"margin-top:14px;cursor:pointer"},chk,el("span",{class:"subtle"},"管理者以外にも日程の確定を許可する")));}
+  return card;
+}
+/* iPhone/Macカレンダーへの追加。アプリ内ブラウザ（LINE等）は .ics を開けないので、
+   先に外部ブラウザで開くよう案内する */
+function addToAppleCalendar(dd){
+  if(isInAppBrowser()){
+    openPop(el("div",{},
+      el("h3",{},"ブラウザで開いてください"),
+      el("p",{class:"subtle",style:"margin:8px 0 0"},"LINEなどアプリ内の画面では、iPhone標準カレンダーへの追加がブロックされます。下のボタンでSafari / Chromeで開き直すと追加できます。"),
+      el("div",{class:"row",style:"margin-top:14px"},
+        el("button",{class:"btn primary sm",onclick:openExternally},"Safari / Chromeで開く"),
+        el("button",{class:"btn ghost sm",onclick:()=>window.open(gcalURL(EV.title,dd.s,dd.e),"_blank")},"Googleカレンダーに追加")
+      ),
+      el("p",{class:"subtle",style:"margin:10px 0 0"},"※ Googleカレンダーはこのままでも追加できます。")
+    ));
+    return;
+  }
+  downloadICS(EV.title,dd.s,dd.e);
 }
 function fmtICS(d){return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+"T"+pad(d.getHours())+pad(d.getMinutes())+"00";}
-function downloadICS(title,start,end){const ics=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Sukima//JP","BEGIN:VEVENT","UID:"+rid()+"@sukima","DTSTAMP:"+fmtICS(new Date()),"DTSTART:"+fmtICS(start),"DTEND:"+fmtICS(end),"SUMMARY:"+title,"END:VEVENT","END:VCALENDAR"].join("\r\n");const blob=new Blob([ics],{type:"text/calendar"});const a=el("a",{href:URL.createObjectURL(blob),download:title+".ics"});document.body.append(a);a.click();a.remove();}
+function downloadICS(title,start,end){downloadICSMulti(title,[{s:start,e:end}]);}
+/* 確定が複数あるときは1つの .ics に全部入れる（カレンダー側が一括で取り込める） */
+function downloadICSMulti(title,spans){
+  const body=[];
+  spans.forEach(sp=>body.push("BEGIN:VEVENT","UID:"+rid()+"@sukima","DTSTAMP:"+fmtICS(new Date()),"DTSTART:"+fmtICS(sp.s),"DTEND:"+fmtICS(sp.e),"SUMMARY:"+title,"END:VEVENT"));
+  const ics=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Sukima//JP"].concat(body).concat(["END:VCALENDAR"]).join("\r\n");
+  const blob=new Blob([ics],{type:"text/calendar"});const a=el("a",{href:URL.createObjectURL(blob),download:title+".ics"});document.body.append(a);a.click();a.remove();
+}
+function addAllToAppleCalendar(list){
+  if(isInAppBrowser()){addToAppleCalendar(decDatesOf(list[0]));return;}   // 案内ポップアップは共通のものを使う
+  downloadICSMulti(EV.title,list.map(d=>{const dd=decDatesOf(d);return {s:dd.s,e:dd.e};}));
+}
 function gcalURL(title,start,end){return "https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(title)+"&dates="+fmtICS(start)+"/"+fmtICS(end);}
 
 /* ---------- action bar ---------- */
@@ -836,9 +1504,231 @@ function renderBar(children){const bar=$("#bar");bar.innerHTML="";if(!children||
 /* =========================================================
    RENDER
 ========================================================= */
+/* =========================================================
+   OWNER CONSOLE（合言葉で解錠。全調整を横断して閲覧・削除）
+========================================================= */
+/* 解錠は「この端末・このタブだけ」。タブを閉じるか30分で自動ロック。
+   合言葉の照合はサーバー側。ブラウザーには30分有効のランダムなセッショントークンだけを置く。 */
+const OWNER_KEY="sukima:owner";        // 旧・永続保存（互換のため掃除する）
+const OWNER_TS="sukima:ownerTs";
+const OWNER_TOKEN="sukima:ownerToken";
+try{sessionStorage.removeItem("sukima:ownerPass");}catch(e){}
+const OWNER_TIMEOUT=30*60*1000;
+try{localStorage.removeItem(OWNER_KEY);}catch(e){}
+let OWNER={loading:false,events:null,meta:null,open:null,detail:null,err:""};
+function ownerUnlocked(){
+  try{const ts=+(sessionStorage.getItem(OWNER_TS)||0);
+    if(!ts||!sessionStorage.getItem(OWNER_TOKEN))return false;
+    if(Date.now()-ts>OWNER_TIMEOUT){sessionStorage.removeItem(OWNER_TS);sessionStorage.removeItem(OWNER_TOKEN);return false;}
+    return true;}catch(e){return false;}
+}
+function ownerToken(){return ownerUnlocked()?(sessionStorage.getItem(OWNER_TOKEN)||""):"";}
+function ownerTouch(){try{sessionStorage.setItem(OWNER_TS,String(Date.now()));}catch(e){}}
+function ownerMinsLeft(){try{const ts=+(sessionStorage.getItem(OWNER_TS)||0);return ts?Math.max(0,Math.round((OWNER_TIMEOUT-(Date.now()-ts))/60000)):0;}catch(e){return 0;}}
+async function sha256hex(s){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");}
+async function ownerTryUnlock(pass){
+  if(!remoteEnabled()){OWNER.err="バックエンド未設定のため利用できません";render();return false;}
+  let result;
+  try{result=await rpc("sukima_owner_check",{p_pass:pass||""});}catch(e){OWNER.err="接続に失敗しました";render();return false;}
+  if(result==="RATE_LIMITED"){OWNER.err="合言葉を15回間違えたため、この接続元から15分間は再入力できません";render();return false;}
+  if(result==="INVALID"){OWNER.err="合言葉が違います";render();return false;}
+  if(typeof result==="string"&&/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(result)){
+    try{sessionStorage.setItem(OWNER_TOKEN,result);}catch(e){}
+    ownerTouch();OWNER.err="";render();ownerLoad();return true;
+  }
+  OWNER.err="認証に失敗しました。時間をおいて再度お試しください";render();return false;
+}
+function ownerLock(){OWNER.events=null;OWNER.detail=null;OWNER.open=null;try{sessionStorage.removeItem(OWNER_TS);sessionStorage.removeItem(OWNER_TOKEN);}catch(e){}toast("ロックしました");render();}
+async function ownerLoad(){
+  if(!ownerUnlocked()||!remoteEnabled())return;
+  OWNER.loading=true;OWNER.err="";render();
+  try{OWNER.events=await remoteListEvents(200);OWNER.meta=await remoteAllAnswerMeta();}
+  catch(e){OWNER.err="読み込みに失敗しました（接続とバックエンド設定を確認してください）";}
+  OWNER.loading=false;render();
+}
+async function ownerOpenDetail(id){
+  OWNER.open=id;OWNER.detail=null;render();
+  try{OWNER.detail={answers:await remoteEventAnswers(id),log:await remoteEventLog(id)};}
+  catch(e){OWNER.detail={answers:[],log:null};}
+  render();
+}
+function ownerDeleteEvent(row){
+  const title=(row.data&&row.data.t)||"(無題)";
+  openPop(el("div",{},
+    el("h3",{},"「"+esc(title)+"」を削除"),
+    el("p",{class:"subtle",style:"margin:6px 0 0"},"この調整と、ひもづく全員の回答をデータベースから削除します。元に戻せません。"),
+    el("div",{class:"row",style:"margin-top:14px"},el("button",{class:"btn primary sm",style:"background:var(--no)",onclick:()=>ownerDeleteEvent2(row,title)},"削除する"))
+  ));
+}
+function ownerDeleteEvent2(row,title){
+  openPop(el("div",{},
+    el("h3",{},"本当に削除してよろしいですか？"),
+    el("p",{class:"subtle",style:"margin:6px 0 0"},"「"+esc(title)+"」を完全に削除します。この操作は取り消せません。"),
+    el("div",{class:"row",style:"margin-top:14px"},el("button",{class:"btn primary sm",style:"background:var(--no)",onclick:async(e)=>{
+      const b=e.target;b.disabled=true;
+      try{await remoteDeleteEvent(row.id);}catch(_){toast("削除に失敗しました");b.disabled=false;return;}
+      removeHistory(row.id);
+      document.querySelectorAll(".pop-back").forEach(x=>x.remove());
+      if(OWNER.open===row.id){OWNER.open=null;OWNER.detail=null;}
+      toast("削除しました");ownerLoad();
+    }},"はい、削除します"))
+  ));
+}
+function ansSummary(cells){let o=0,t=0;for(const k in (cells||{})){if(cells[k]===2)o++;else if(cells[k]===1)t++;}return {o,t};}
+function fmtStamp(s){if(!s)return "";const d=new Date(s);if(isNaN(d))return "";return (d.getMonth()+1)+"/"+d.getDate()+" "+pad(d.getHours())+":"+pad(d.getMinutes());}
+const ACT_LABEL={created:"作成",answered:"回答",answer_edited:"回答を修正",answer_deleted:"回答を削除",decided:"日程を確定",decision_cleared:"確定を取消"};
+function viewOwner(app){
+  const back=()=>{SUPPRESS_HASH=true;location.hash="";go("home");};
+  if(!remoteEnabled()){
+    app.append(el("section",{class:"card"},
+      el("div",{class:"eyebrow"},"オーナー用メニュー"),
+      el("p",{class:"lead",style:"margin-top:8px"},"バックエンド（Supabase）が未設定のため、この画面は利用できません。"),
+      el("div",{class:"row",style:"margin-top:12px"},el("button",{class:"btn ghost",onclick:back},"ホームへ"))
+    ));
+    return;
+  }
+  if(!ownerUnlocked()){
+    const inp=el("input",{type:"password",placeholder:"合言葉"});
+    app.append(el("section",{class:"card"},
+      el("div",{class:"eyebrow"},"オーナー用メニュー"),
+      el("h1",{style:"font-size:20px;margin:6px 0 2px"},"合言葉を入力してください"),
+      el("p",{class:"subtle",style:"margin:6px 0 0"},"あなたが作った・みんなが作った調整を、まとめて確認できる画面です。"),
+      el("p",{class:"subtle",style:"margin:6px 0 0"},"合言葉を15回間違えると、この接続元から15分間は再入力できません。"),
+      el("label",{class:"fld"},el("span",{class:"lbl"},"合言葉"),inp),
+      OWNER.err?el("div",{style:"color:var(--no);font-weight:700;font-size:13px;margin-top:8px"},OWNER.err):null,
+      el("div",{class:"row",style:"margin-top:14px"},
+        el("button",{class:"btn primary",onclick:()=>ownerTryUnlock(inp.value)},"解錠する"),
+        el("button",{class:"btn ghost",onclick:back},"ホームへ")
+      )
+    ));
+    inp.addEventListener("keydown",e=>{if(e.key==="Enter")ownerTryUnlock(inp.value);});
+    return;
+  }
+  const head=el("section",{class:"card"});
+  head.append(el("div",{class:"eyebrow"},"オーナー用メニュー"),el("h1",{style:"font-size:20px;margin:6px 0 2px"},"すべての調整"));
+  const evs=OWNER.events||[];
+  const metaByEv={};(OWNER.meta||[]).forEach(m=>{(metaByEv[m.event_id]=metaByEv[m.event_id]||[]).push(m);});
+  head.append(el("p",{class:"subtle",style:"margin:6px 0 0"},OWNER.loading?"読み込み中…":(evs.length+"件の調整 ・ 回答 "+(OWNER.meta||[]).length+"件")));
+  if(OWNER.err)head.append(el("div",{class:"note",style:"color:var(--no)"},OWNER.err));
+  head.append(el("div",{class:"row",style:"margin-top:12px"},
+    el("button",{class:"btn ghost sm",onclick:ownerLoad},"再読み込み"),
+    el("button",{class:"btn ghost sm",onclick:back},"ホームへ"),
+    el("button",{class:"btn primary sm",style:"background:var(--no)",onclick:ownerLock},"🔒 ロックする")
+  ));
+  head.append(el("div",{class:"lockinfo"},
+    el("div",{style:"font-weight:800;margin-bottom:4px"},"🔓 いま解錠中（あと約"+ownerMinsLeft()+"分）"),
+    el("div",{},"解錠は「この端末のこの画面だけ」で有効です："),
+    el("div",{},"・この画面（LINEやブラウザのタブ）を閉じると自動でロック"),
+    el("div",{},"・解錠から30分で自動ロックし、再度合言葉が必要"),
+    el("div",{},"・「🔒 ロックする」を押せば、その場ですぐロック"),
+    el("div",{style:"margin-top:6px"},"※ロック中は、合言葉を知らない人がロゴを長押ししても中身は見えません。人にスマホを渡すときはロックしてください。")
+  ));
+  app.append(head);
+
+  if(!OWNER.loading&&!evs.length){app.append(el("section",{class:"card"},el("div",{class:"note"},"まだ調整がありません。")));return;}
+  evs.forEach(row=>{
+    const d=row.data||{};const ev=unpackEvent(d);
+    const ans=metaByEv[row.id]||[];
+    const card=el("section",{class:"card ownercard"});
+    card.append(el("div",{style:"display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"},
+      el("h2",{style:"font-size:16px"},esc(ev.title||"(無題)")),
+      normDecs(ev.decisions).length?el("span",{class:"tag ok"},"決定 "+decLabelOf(ev)):el("span",{class:"tag"},"未決定")
+    ));
+    card.append(el("div",{class:"subtle",style:"margin-top:4px"},
+      "作成 "+fmtStamp(row.created_at)+" ・ 候補 "+ev.cols.length+"日×"+ev.rows.length+"枠 ・ 回答 "+ans.length+"人"+(ev.deadline?" ・ 締切 "+fmtDate(ev.deadline):"")));
+    if(ans.length)card.append(el("div",{class:"people",style:"margin-top:8px"},...ans.slice(0,12).map(a=>el("span",{class:"pill"},a.name+(a.comment?" 💬":"")))));
+    card.append(el("div",{class:"row",style:"margin-top:10px"},
+      el("button",{class:"btn ghost sm",onclick:()=>{OWNER.open===row.id?(OWNER.open=null,OWNER.detail=null,render()):ownerOpenDetail(row.id);}},OWNER.open===row.id?"閉じる":"中身を見る"),
+      el("button",{class:"btn ghost sm",onclick:()=>{SUPPRESS_HASH=true;location.hash="id="+row.id;boot();}},"この調整を開く"),
+      el("button",{class:"btn ghost sm",style:"color:var(--no);border-color:var(--no)",onclick:()=>ownerDeleteEvent(row)},"削除")
+    ));
+    if(OWNER.open===row.id){
+      const det=el("div",{style:"margin-top:12px;border-top:1px solid var(--line);padding-top:12px"});
+      if(!OWNER.detail)det.append(el("div",{class:"subtle"},"読み込み中…"));
+      else{
+        det.append(el("div",{class:"subtle",style:"font-weight:800;margin-bottom:6px"},"回答の中身"));
+        if(!OWNER.detail.answers.length)det.append(el("div",{class:"subtle"},"—"));
+        OWNER.detail.answers.forEach(a=>{
+          const s=ansSummary(a.cells);
+          det.append(el("div",{class:"cmt"},el("b",{},esc(a.name)),"○"+s.o+" / △"+s.t+"　"+fmtStamp(a.updated_at)+(a.comment?"　💬"+esc(a.comment):"")));
+        });
+        det.append(el("div",{class:"subtle",style:"font-weight:800;margin:12px 0 6px"},"操作の履歴"),el("div",{class:"subtle",style:"margin-bottom:6px"},"更新後の実際のデータ変更を記録します。名前は入力された表示名で、本人確認済みの記録ではありません。更新前の履歴には、直接書き込まれた行が混ざる可能性があります。"));
+        const lg=OWNER.detail.log;
+        if(lg===null)det.append(el("div",{class:"subtle"},"（履歴テーブル未設定。supabase-log.sql を実行すると、誰がいつ何をしたかを記録できます）"));
+        else if(!lg.length)det.append(el("div",{class:"subtle"},"—"));
+        else lg.forEach(l=>det.append(el("div",{class:"cmt"},el("b",{},ACT_LABEL[l.action]||l.action),(l.who?esc(l.who)+"　":"")+fmtStamp(l.created_at)+(l.detail?"　"+esc(l.detail):""))));
+      }
+      card.append(det);
+    }
+    app.append(card);
+  });
+}
+function decLabelOf(ev){const l=normDecs(ev.decisions);if(!l.length)return "";return l.map(decLabelOne).join("、")+(l.length>1?"（"+l.length+"件）":"");}
+
 function viewLoading(app){app.append(el("section",{class:"card"},el("div",{class:"eyebrow"},"読み込み中"),el("p",{class:"lead",style:"margin-top:8px"},"調整を読み込んでいます…")));}
-function viewNotFound(app){app.append(el("section",{class:"card"},el("div",{class:"eyebrow"},"見つかりません"),el("h1",{style:"font-size:20px;margin:6px 0"},"この調整リンクは開けませんでした"),el("p",{class:"lead"},"リンクが正しいか確認してください。作成者に再共有してもらうと直る場合があります。"),el("div",{class:"row",style:"margin-top:14px"},el("button",{class:"btn primary",onclick:()=>{SUPPRESS_HASH=true;location.hash="";go("home");}},"ホームへ"))));}
-function render(){const app=$("#app");app.innerHTML="";$("#bar").innerHTML="";if(SCREEN==="home")viewHome(app);else if(SCREEN==="create")viewCreate(app);else if(SCREEN==="share")viewShare(app);else if(SCREEN==="respond")viewRespond(app);else if(SCREEN==="result")viewResult(app);else if(SCREEN==="loading")viewLoading(app);else if(SCREEN==="notfound")viewNotFound(app);}
+function viewNotFound(app){app.append(el("section",{class:"card"},el("div",{class:"eyebrow"},"見つかりません"),el("h1",{style:"font-size:20px;margin:6px 0"},"この調整リンクは開けませんでした"),el("p",{class:"lead"},"リンクが正しいか確認してください。作成者に再共有してもらうと直る場合があります。"),el("div",{class:"row",style:"margin-top:14px"},el("button",{class:"btn primary",onclick:()=>{SUPPRESS_HASH=true;location.hash="";go("home");}},"ホームへ"),el("button",{class:"btn ghost",onclick:()=>{go("diag");diagRun();}},"接続を診断する"))));}
+
+/* =========================================================
+   DIAG — 接続の自己診断（devtools無しで原因を特定するための画面）
+   ここで扱うのは「サーバーが応答するか」だけで、調整の中身は一切表示しない。
+========================================================= */
+let DIAG={running:false,rows:[],verdict:""};
+async function diagProbe(label,path,body,expect){
+  const t0=Date.now();
+  try{
+    const r=await fetch(sbBase()+path,{method:body?"POST":"GET",headers:sbHeaders(),body:body?JSON.stringify(body):undefined});
+    const txt=await r.text();let msg="";
+    try{const j=txt?JSON.parse(txt):null;msg=(j&&j.message)||"";}catch(e){}
+    return {label,status:r.status,ok:expect(r.status),msg,ms:Date.now()-t0};
+  }catch(e){ return {label,status:0,ok:false,msg:"接続できません",ms:Date.now()-t0}; }
+}
+async function diagRun(){
+  if(!remoteEnabled()){DIAG={running:false,rows:[],verdict:"このビルドにはバックエンド設定が入っていません（オフライン版）"};render();return;}
+  DIAG={running:true,rows:[],verdict:""};render();
+  const rows=[];
+  rows.push(await diagProbe("① 調整を読む窓口 (sukima_get_event)","/rest/v1/rpc/sukima_get_event",{p_id:"zzzzzzzzzzzz"},s=>s===200));
+  rows.push(await diagProbe("② 認可チェックの窓口 (sukima_owner_check)","/rest/v1/rpc/sukima_owner_check",{p_pass:"__diag__"},s=>s===200));
+  /* 作成の窓口は「わざと不正な引数」で叩く。関数があれば入力チェックで400、無ければ404。
+     どちらでも書き込みは発生しないので、診断で調整が増えることはない。 */
+  rows.push(await diagProbe("③ 調整を作る窓口 (sukima_create_event)","/rest/v1/rpc/sukima_create_event",{p_id:"!",p_data:{},p_admin_key:"x"},s=>s===400));
+  rows.push(await diagProbe("④ テーブル直アクセスの遮断","/rest/v1/events?select=id&limit=1",null,s=>s===401||s===403||s===404));
+  const a=rows[0],b=rows[1],c=rows[2],d=rows[3];
+  const missing=[a,b,c].some(x=>x.status===404);
+  let v;
+  if(missing) v="⚠ サーバー側のSQLが未適用か、APIのキャッシュが古い状態です。Supabaseで supabase-secure.sql をもう一度 Run してください（最後の1行がキャッシュを更新します）。";
+  else if([a,b,c].some(x=>x.status===401||x.status===403)) v="⚠ サーバーに拒否されました。SQLの実行権限（grant）が反映されていない可能性があります。supabase-secure.sql を再実行してください。";
+  else if(a.status===0) v="⚠ サーバーに接続できません。通信環境か、URLの設定を確認してください。";
+  else if(!d.ok) v="⚠ テーブルに直接アクセスできてしまいます。古いSQLのままです。supabase-secure.sql を実行してください。";
+  else v="✅ サーバー側は正常です。作成に失敗する場合は、アプリが古いキャッシュのままの可能性があります（下のビルド番号を確認してください）。";
+  DIAG={running:false,rows,verdict:v};render();
+}
+function viewDiag(app){
+  const card=el("section",{class:"card"});
+  card.append(
+    el("div",{class:"eyebrow"},"接続診断"),
+    el("h1",{style:"font-size:20px;margin:6px 0 2px"},"サーバーとつながっているか調べます"),
+    el("p",{class:"subtle",style:"margin:0 0 12px"},"調整の中身は表示しません。窓口が応答するかだけを確認します。")
+  );
+  const info=el("div",{class:"subtle",style:"margin-bottom:12px;line-height:1.7"});
+  info.append(el("div",{},"ビルド: ",el("b",{},BUILD)));
+  info.append(el("div",{},"接続先: ",el("b",{},remoteEnabled()?sbBase().replace(/^https?:\/\//,""):"（未設定）")));
+  card.append(info);
+  if(DIAG.running)card.append(el("p",{class:"lead"},"確認中…"));
+  if(DIAG.verdict)card.append(el("p",{style:"font-weight:800;line-height:1.6;margin:4px 0 12px"},DIAG.verdict));
+  DIAG.rows.forEach(r=>{
+    card.append(el("div",{style:"display:flex;gap:8px;align-items:baseline;padding:7px 0;border-top:1px solid var(--line)"},
+      el("span",{style:"font-weight:800;color:"+(r.ok?"var(--ok)":"var(--bad,#e5484d)")},r.ok?"OK":"NG"),
+      el("span",{style:"flex:1"},r.label),
+      el("span",{class:"subtle"},"HTTP "+(r.status||"—"))
+    ));
+    if(r.msg&&!r.ok)card.append(el("div",{class:"subtle",style:"padding-bottom:6px"},esc(r.msg)));
+  });
+  if(LAST_ERR)card.append(el("div",{class:"subtle",style:"margin-top:12px;border-top:1px solid var(--line);padding-top:10px"},
+    "直近のエラー: "+LAST_ERR.fn+" / HTTP "+LAST_ERR.status+(LAST_ERR.code?" / "+LAST_ERR.code:"")+(LAST_ERR.message?" / "+LAST_ERR.message:"")));
+  app.append(card);
+  renderBar([el("button",{class:"btn ghost sm",onclick:()=>{SUPPRESS_HASH=true;location.hash="";go("home");}},"ホーム"),el("div",{style:"flex:1"}),el("button",{class:"btn primary",onclick:diagRun},"もう一度調べる")]);
+}
+function render(){const app=$("#app");app.innerHTML="";$("#bar").innerHTML="";if(SCREEN==="home")viewHome(app);else if(SCREEN==="create")viewCreate(app);else if(SCREEN==="share")viewShare(app);else if(SCREEN==="respond")viewRespond(app);else if(SCREEN==="result")viewResult(app);else if(SCREEN==="loading")viewLoading(app);else if(SCREEN==="notfound")viewNotFound(app);else if(SCREEN==="owner")viewOwner(app);else if(SCREEN==="diag")viewDiag(app);}
 
 boot();
 </script>
